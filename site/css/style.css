@@ -37,6 +37,16 @@ ul, ol { list-style: none; }
 
 ::selection { background: var(--c-primary); color: #fff; }
 
+/* رابط التخطّي — مخفي حتى يصله التركيز بلوحة المفاتيح */
+.skip-link {
+  position: fixed; inset-block-start: -100px; inset-inline-start: 1rem; z-index: 300;
+  padding: .75rem 1.4rem; border-radius: 0 0 var(--r-sm) var(--r-sm);
+  background: var(--c-primary); color: #fff;
+  font-weight: 700; font-size: var(--t-sm);
+  transition: inset-block-start var(--d-base) var(--e-out);
+}
+.skip-link:focus { inset-block-start: 0; }
+
 /* شريط التمرير */
 ::-webkit-scrollbar { width: 11px; height: 11px; }
 ::-webkit-scrollbar-track { background: var(--c-bg-alt); }

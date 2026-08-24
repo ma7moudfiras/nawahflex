@@ -48,6 +48,7 @@ APK / App Store      →  app/      نفس كود Flutter
 nawahflex/
 ├─ site/                        ← الموقع (مجلد النشر على Vercel)
 │  ├─ index.html                البنية الكاملة + وسوم SEO + JSON-LD + أيقونات SVG
+│  ├─ 404.html                  صفحة الخطأ (مستقلة، بأنماطها الخاصة)
 │  ├─ css/
 │  │  ├─ tokens.css             ★ مصدر الحقيقة للألوان والخطوط والمسافات
 │  │  └─ style.css              كل الأنماط، مرتّبة بأقسام مرقّمة ١–٢٠
@@ -56,7 +57,7 @@ nawahflex/
 │  │  ├─ config.js              مفاتيح Supabase العلنية
 │  │  ├─ api.js                 طبقة الاتصال بالقاعدة (fetch مباشر، بلا مكتبات)
 │  │  └─ main.js                البناء والتفاعل، مقسّم بأقسام مرقّمة ١–٨
-│  ├─ assets/                   favicon.svg · og-cover.png
+│  ├─ assets/                   favicon.svg · og-cover.png · icon-192/512.png
 │  ├─ manifest.webmanifest      يجعل الموقع قابلاً للتثبيت على الجوال (PWA)
 │  ├─ robots.txt · sitemap.xml
 │
@@ -109,6 +110,7 @@ nawahflex/
 ### إتاحة الوصول
 - كل حركة تحترم `prefers-reduced-motion` (القسم ٢٠ في `style.css`).
 - كل عنصر تفاعلي يصله المستخدم بلوحة المفاتيح، وله `aria-label` عند اللزوم.
+- رابط «تخطَّ إلى المحتوى» أول عنصر في `<body>` — لا تحذفه ولا تُدخل شيئاً قبله.
 - تباين النص لا يقل عن AA.
 
 ---
