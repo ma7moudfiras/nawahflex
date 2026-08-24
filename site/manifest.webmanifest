@@ -1,0 +1,16 @@
+{
+  "name": "أكاديمية نواة فليكس",
+  "short_name": "نواة فليكس",
+  "description": "الروبوتات والبرمجة والذكاء الاصطناعي و STEM والقيادة — نحو جيل يقود المستقبل.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070C1E",
+  "theme_color": "#070C1E",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/og-cover.png", "sizes": "1200x630", "type": "image/png" }
+  ]
+}

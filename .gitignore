@@ -1,0 +1,23 @@
+node_modules/
+.DS_Store
+*.log
+
+# Vercel
+.vercel
+
+# Supabase (محلي)
+.branches
+.temp
+supabase/.temp
+
+# Flutter (المرحلة الثانية)
+app/build/
+app/.dart_tool/
+app/.flutter-plugins*
+app/ios/Pods/
+app/android/.gradle/
+app/**/GeneratedPluginRegistrant.*
+
+# ملفات بيئة — لا تُرفع أبداً
+.env
+.env.*

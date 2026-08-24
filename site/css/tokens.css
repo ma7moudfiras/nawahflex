@@ -1,0 +1,81 @@
+/* ==========================================================================
+   نواة فليكس — رموز الهوية البصرية (Design Tokens)
+   --------------------------------------------------------------------------
+   هذا الملف هو المصدر الوحيد للحقيقة بالنسبة لألوان وخطوط الموقع.
+   النسخة المقابلة لتطبيق Flutter موجودة في: brand/tokens.dart
+   أي تغيير هنا يجب أن ينعكس هناك يدوياً (القيم متطابقة حرفياً).
+   ========================================================================== */
+
+:root {
+  /* ---- الألوان الأساسية ---- */
+  --c-ink:          #070C1E;   /* الأسود المزرق — النصوص الرئيسية والخلفيات الداكنة */
+  --c-ink-soft:     #101836;
+  --c-ink-muted:    #1B2547;
+
+  --c-primary:      #2563EB;   /* الأزرق — الهوية الأساسية */
+  --c-primary-dark: #1D4ED8;
+  --c-primary-soft: #DBEAFE;
+
+  --c-accent:       #F59E0B;   /* الكهرماني — الإنجازات والتمييز */
+  --c-accent-soft:  #FEF3C7;
+
+  --c-cyan:         #06B6D4;   /* السماوي — الروبوت والتقنية */
+  --c-violet:       #7C3AED;   /* البنفسجي — الذكاء الاصطناعي */
+  --c-green:        #10B981;   /* الأخضر — النجاح والتأكيد */
+  --c-rose:         #F43F5E;
+
+  /* ---- الأسطح ---- */
+  --c-bg:           #FFFFFF;
+  --c-bg-alt:       #F6F7FB;   /* خلفية الأقسام المتناوبة */
+  --c-bg-warm:      #FBF9F4;   /* خلفية دافئة بروح المجلة */
+  --c-card:         #FFFFFF;
+  --c-border:       #E4E7EF;
+  --c-border-soft:  #EFF1F7;
+
+  /* ---- النصوص ---- */
+  --c-text:         #0F172A;
+  --c-text-soft:    #475569;
+  --c-text-muted:   #7A8699;
+  --c-text-invert:  #FFFFFF;
+
+  /* ---- الخطوط ---- */
+  --f-display: "Tajawal", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --f-body:    "IBM Plex Sans Arabic", "Tajawal", system-ui, sans-serif;
+  --f-mono:    "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ---- مقاسات الخط (سُلّم متجاوب) ---- */
+  --t-xs:   0.78rem;
+  --t-sm:   0.875rem;
+  --t-base: 1rem;
+  --t-lg:   1.125rem;
+  --t-xl:   clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --t-2xl:  clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --t-3xl:  clamp(2rem, 1.6rem + 1.8vw, 2.9rem);
+  --t-4xl:  clamp(2.6rem, 1.9rem + 3.2vw, 4.5rem);
+
+  /* ---- المسافات ---- */
+  --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;
+  --s-5: 1.5rem;   --s-6: 2rem;     --s-7: 3rem;     --s-8: 4rem;
+  --s-9: 6rem;     --s-10: 8rem;
+
+  /* ---- الاستدارات ---- */
+  --r-sm: 8px;   --r-md: 14px;   --r-lg: 22px;   --r-xl: 32px;  --r-full: 999px;
+
+  /* ---- الظلال ---- */
+  --sh-sm: 0 1px 2px rgba(7,12,30,.06), 0 1px 3px rgba(7,12,30,.04);
+  --sh-md: 0 4px 12px rgba(7,12,30,.07), 0 2px 4px rgba(7,12,30,.04);
+  --sh-lg: 0 18px 40px rgba(7,12,30,.10), 0 4px 12px rgba(7,12,30,.05);
+  --sh-xl: 0 32px 70px rgba(7,12,30,.14), 0 8px 20px rgba(7,12,30,.06);
+
+  /* ---- الحركة ---- */
+  --e-out:    cubic-bezier(.22,.61,.36,1);
+  --e-spring: cubic-bezier(.34,1.56,.64,1);
+  --d-fast:   .18s;
+  --d-base:   .32s;
+  --d-slow:   .6s;
+
+  /* ---- التخطيط ---- */
+  --w-page:   1220px;
+  --w-narrow: 820px;
+  --h-header: 74px;
+}
