@@ -476,6 +476,103 @@ h1, h2, h3, h4 {
 .event__info span { display: inline-flex; align-items: center; gap: .3rem; font-size: var(--t-xs); color: var(--c-text-muted); }
 .event__info svg { width: 13px; height: 13px; flex-shrink: 0; }
 
+/* ---------- 8b. FlexMind — العلامة الفرعية ----------
+   ألوانها مستقلّة عن ألوان الأكاديمية عمداً (متغيّرات --c-fm-*)
+   كي تُقرأ كعلامة قائمة بذاتها داخل الموقع. */
+.fm {
+  position: relative; overflow: hidden; isolation: isolate;
+  padding-block: clamp(3.5rem, 7vw, 6.5rem);
+  background: linear-gradient(135deg, var(--c-fm-navy-deep) 0%, var(--c-fm-navy) 55%, #1B3590 100%);
+  color: #C3D2F0;
+}
+.fm::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.fm__glow { position: absolute; border-radius: 50%; filter: blur(100px); z-index: -1; pointer-events: none; }
+.fm__glow--1 { width: 40vw; height: 40vw; background: var(--c-fm-blue);   opacity: .30; inset-block-start: -18%; inset-inline-start: -8%; }
+.fm__glow--2 { width: 32vw; height: 32vw; background: var(--c-fm-orange); opacity: .18; inset-block-end: -20%; inset-inline-end: -6%; }
+
+.fm__grid {
+  display: grid; grid-template-columns: 1.05fr .95fr;
+  gap: clamp(2rem, 5vw, 4rem); align-items: center;
+}
+
+.fm__eyebrow {
+  display: inline-block;
+  padding: .28rem .9rem; margin-bottom: 1.2rem;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.16);
+  font-size: var(--t-xs); font-weight: 700; color: #B9CBEC;
+}
+
+/* الشعار النصّي — يُستبدل تلقائياً بالشعار الرسمي حين يُضاف مساره في content.js */
+.fm__wordmark {
+  font-family: var(--f-display); font-weight: 800;
+  font-size: clamp(2.6rem, 2rem + 2.6vw, 4rem);
+  line-height: 1; letter-spacing: -.035em;
+  font-style: italic; direction: ltr;
+  color: #fff; margin-bottom: .45rem;
+}
+.fm__wordmark b { color: var(--c-fm-orange); font-weight: 800; }
+.fm__tagline {
+  direction: ltr;
+  font-size: var(--t-sm); font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: #8FA6D4;
+  margin-bottom: 1.6rem;
+}
+.fm__mark img { max-width: 300px; margin-bottom: 1rem; }
+
+.fm h2 { color: #fff; font-size: var(--t-2xl); margin-bottom: .8rem; }
+.fm__lead { font-size: var(--t-lg); color: #DCE6FA; line-height: 1.85; margin-bottom: .9rem; }
+.fm__body { line-height: 1.9; color: #9FB4DC; margin-bottom: 1.6rem; }
+
+.fm__facts {
+  display: flex; flex-wrap: wrap; gap: .7rem;
+  margin-bottom: 1.8rem;
+}
+.fm__fact {
+  padding: .7rem 1.15rem; border-radius: var(--r-md);
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.13);
+  text-align: center; min-width: 96px;
+}
+.fm__fact b {
+  display: block; direction: ltr;
+  font-family: var(--f-display); font-weight: 800; font-size: 1.35rem;
+  color: var(--c-fm-orange-lt); line-height: 1.15;
+}
+.fm__fact span { font-size: var(--t-xs); color: #8FA6D4; }
+
+.fm__pillars { display: grid; gap: .85rem; }
+.fm__pillar {
+  display: flex; gap: 1rem; align-items: flex-start;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(6px);
+  transition: transform var(--d-base) var(--e-out),
+              background var(--d-base) var(--e-out),
+              border-color var(--d-base) var(--e-out);
+}
+.fm__pillar:hover {
+  transform: translateX(-5px);
+  background: rgba(255,255,255,.09);
+  border-color: var(--c-fm-orange);
+}
+.fm__pillar-ico {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: var(--r-sm);
+  display: grid; place-items: center; font-size: 1.35rem; line-height: 1;
+  background: linear-gradient(150deg, var(--c-fm-blue), var(--c-fm-navy));
+  border: 1px solid rgba(255,255,255,.16);
+  color: #fff;
+}
+.fm__pillar h3 { color: #fff; font-size: var(--t-base); margin-bottom: .2rem; }
+.fm__pillar p { font-size: var(--t-sm); color: #9FB4DC; line-height: 1.75; }
+
 /* ---------- 9. الإنجازات (تخطيط مجلة غير متماثل) ---------- */
 .ach__grid {
   display: grid;
@@ -864,7 +961,7 @@ h1, h2, h3, h4 {
   .stat:nth-child(-n+3) { border-bottom: 1px solid var(--c-border-soft); }
   .news__grid { grid-template-columns: 1fr 1fr; }
   .post--lead { grid-column: span 2; }
-  .about__grid, .contact__grid { grid-template-columns: 1fr; }
+  .about__grid, .contact__grid, .fm__grid { grid-template-columns: 1fr; }
   .footer__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
   .gallery__grid { grid-template-columns: repeat(3, 1fr); }
 }

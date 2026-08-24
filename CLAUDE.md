@@ -18,6 +18,23 @@
 
 ---
 
+## ١.١ العلامات
+
+- **أكاديمية نواة فليكس** (Nawah Flex Academy) — العلامة الأم، وهي هوية الموقع كله.
+- **FlexMind** — علامة فرعية لبرنامج «عقل وجسد» (شطرنج + حساب ذهني + لياقة).
+  شعارها: دماغ + حصان شطرنج + عضلة · شعارها النصّي: *Train Smart. Think Strong.*
+  لها لوحة ألوان مستقلّة (`--c-fm-*` في `tokens.css`) تُستعمل **داخل قسم
+  `#flexmind` فقط** — لا تسرّبها إلى باقي الموقع.
+
+**⛔ لا تستبدل اسم الأكاديمية بـ FlexMind في أي وسم SEO أو عنوان أو JSON-LD.**
+الاسم في `<title>` و OG هو «أكاديمية نواة فليكس» — تغييره بعد الفهرسة يُفقد الموقع
+ترتيبه في البحث.
+
+الشعار الرسمي لـ FlexMind يوضع في `site/assets/`، ثم يُملأ الحقل `flexmind.logo`
+في `content.js` فيحلّ تلقائياً محل الشعار النصّي.
+
+---
+
 ## ٢. المعمارية — والقرار الذي بُنيت عليه
 
 ```
@@ -58,6 +75,7 @@ nawahflex/
 │  │  ├─ api.js                 طبقة الاتصال بالقاعدة (fetch مباشر، بلا مكتبات)
 │  │  └─ main.js                البناء والتفاعل، مقسّم بأقسام مرقّمة ١–٨
 │  ├─ assets/                   favicon.svg · og-cover.png · icon-192/512.png
+│  │                            ⚠️ ينقص: شعار FlexMind الرسمي
 │  ├─ manifest.webmanifest      يجعل الموقع قابلاً للتثبيت على الجوال (PWA)
 │  ├─ robots.txt · sitemap.xml
 │
@@ -91,6 +109,9 @@ nawahflex/
 استعمل `var(--c-primary)` وأخواتها. **ممنوع** كتابة `#2563EB` في `style.css`.
 عند إضافة لون جديد: أضفه في `tokens.css` **و** `brand/tokens.dart` معاً.
 
+البرتقالي `--c-accent` مأخوذ حرفياً من شعار FlexMind (`#F7931E`) لتتوحّد
+العلامتان. ورموز `--c-fm-*` محجوزة لقسم FlexMind وحده.
+
 ### RTL أصيل لا معكوس
 استعمل الخصائص المنطقية دائماً:
 `margin-inline-start` لا `margin-left` · `inset-inline-end` لا `right` ·
@@ -122,6 +143,8 @@ nawahflex/
 | تعديل نص/رقم/بطاقة | `site/js/content.js` |
 | تغيير لون أو خط | `site/css/tokens.css` **و** `brand/tokens.dart` |
 | إضافة قسم جديد | `index.html` (البنية) + `style.css` (قسم مرقّم جديد) + `content.js` (البيانات) + دالة `buildX()` في `main.js` |
+| تعديل محتوى FlexMind | `content.js` ← الكائن `flexmind` |
+| وضع شعار FlexMind الرسمي | ضع الملف في `site/assets/` واملأ `flexmind.logo` |
 | ربط Supabase | املأ `site/js/config.js` بعد تطبيق الميغريشن |
 | تعديل عنوان/وصف البحث | `site/index.html` — وسوم `<title>` و `<meta>` و OG |
 | نقل المحتوى إلى القاعدة | أضف دوال قراءة في `api.js` — أسماء الحقول في الجداول مطابقة لـ `content.js` عمداً |
