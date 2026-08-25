@@ -18,7 +18,7 @@
 
 | | |
 |---|---|
-| **الواجهة** | HTML · CSS · JavaScript (صفر اعتماديات) |
+| **الواجهة** | HTML · CSS · JavaScript (صفر اعتماديات، صفر نطاقات خارجية) |
 | **قاعدة البيانات** | Supabase (PostgreSQL + RLS + Storage) |
 | **النشر** | Vercel |
 | **إدارة الإصدارات** | GitHub |

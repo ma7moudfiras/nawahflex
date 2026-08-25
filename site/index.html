@@ -26,10 +26,12 @@
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+<!-- الخطوط مستضافة محلياً: لا نطاق خارجي في المسار الحَرِج، ويعمل الموقع
+     كامل الشكل حتى لو تعذّر الوصول إلى جوجل. -->
+<link rel="preload" href="assets/fonts/IBMPlexSansArabic-400-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Tajawal-800-arabic.woff2" as="font" type="font/woff2" crossorigin>
 
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/style.css">
 
