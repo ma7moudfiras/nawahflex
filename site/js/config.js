@@ -11,7 +11,6 @@
    ========================================================================== */
 
 window.CONFIG = {
-  // ⚠️ املأ بعد إنشاء مشروع Supabase
-  SUPABASE_URL: "",   // مثال: https://xxxxxxxx.supabase.co
-  SUPABASE_KEY: "",   // المفتاح العلني sb_publishable_... أو anon key
+  SUPABASE_URL: "https://zhpnqtwegulqhalfvvoj.supabase.co",
+  SUPABASE_KEY: "sb_publishable_TqhKQEe5deDJ-es_wiGHLA_dAVW1LuC",
 };

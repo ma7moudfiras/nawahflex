@@ -60,21 +60,23 @@ academy: {
 
 ## ربط قاعدة البيانات
 
-1. أنشئ مشروعاً على [supabase.com](https://supabase.com).
-2. طبّق الملف `supabase/migrations/0001_init.sql` من محرّر SQL في لوحة Supabase.
-3. املأ `site/js/config.js`:
+**القاعدة مربوطة وتعمل.** مشروع Supabase باسم `nawahflex` في منطقة `eu-central-1`،
+والميغريشن مطبّق، و`site/js/config.js` مملوء بالمفتاح العلني.
 
-```js
-window.CONFIG = {
-  SUPABASE_URL: "https://xxxxxxxx.supabase.co",
-  SUPABASE_KEY: "sb_publishable_...",   // المفتاح العلني فقط
-};
+لإعادة البناء من الصفر على مشروع جديد، طبّق الميغريشن بالترتيب:
+
 ```
+supabase/migrations/0001_init.sql
+supabase/migrations/0002_move_helpers_to_private_schema.sql
+```
+
+ثم املأ `site/js/config.js` برابط المشروع ومفتاحه العلني.
 
 > **ملاحظة أمنية:** المفتاح العلني مصمّم ليكون مكشوفاً في المتصفح — الحماية
 > الحقيقية من سياسات RLS في الميغريشن. لا تضع `service_role` key هنا أبداً.
 
-**قبل الربط:** الموقع يعمل بشكل كامل، ونموذج التواصل يرسل عبر واتساب تلقائياً.
+**السلوك:** الزائر يستطيع الإرسال فقط، ولا يقرأ الرسائل إطلاقاً. وإذا تعذّر
+الوصول للقاعدة أو تجاوز الطلب ١٢ ثانية، يتحوّل النموذج تلقائياً إلى واتساب.
 
 ---
 
