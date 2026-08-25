@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070C1E">
+<meta name="robots" content="noindex">
+<title>الصفحة غير موجودة — أكاديمية نواة فليكس</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; }
+  body {
+    min-height: 100dvh;
+    display: grid; place-items: center;
+    padding: 2rem;
+    font-family: var(--f-body);
+    color: #C7D0E4;
+    background: linear-gradient(120deg, var(--c-ink) 0%, #16225A 60%, #2D1B69 100%);
+    text-align: center;
+    overflow: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .wrap { position: relative; max-width: 520px; }
+  .orb { width: 132px; height: 132px; margin: 0 auto 2rem; position: relative; }
+  .ring { position: absolute; inset: 44px 0; border-radius: 50%; border: 2px solid; }
+  .r1 { border-color: var(--c-cyan);   transform: rotate(-28deg); }
+  .r2 { border-color: var(--c-violet); transform: rotate(32deg); }
+  .core {
+    position: absolute; inset: 47px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #93C5FD, var(--c-primary) 60%, #4C1D95);
+    box-shadow: 0 0 44px rgba(37,99,235,.6);
+  }
+  h1 {
+    font-family: var(--f-display); font-weight: 800;
+    font-size: clamp(3.4rem, 12vw, 5.4rem); line-height: 1;
+    color: #fff; letter-spacing: -.04em; margin-bottom: .6rem;
+    direction: ltr;
+  }
+  h2 { font-family: var(--f-display); font-size: var(--t-2xl); color: #fff; margin-bottom: .8rem; }
+  p { line-height: 1.9; color: #9AA7C2; margin-bottom: 2rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .9rem 2rem; border-radius: var(--r-full);
+    background: var(--c-primary); color: #fff;
+    font-weight: 700; font-size: var(--t-sm); text-decoration: none;
+    box-shadow: 0 8px 24px rgba(37,99,235,.4);
+    transition: transform .2s var(--e-out);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="orb" aria-hidden="true">
+      <div class="ring r1"></div>
+      <div class="ring r2"></div>
+      <div class="core"></div>
+    </div>
+    <h1>404</h1>
+    <h2>هذه الصفحة خارج المدار</h2>
+    <p>يبدو أن الرابط الذي وصلت منه لم يعد موجوداً، أو أن العنوان به خطأ مطبعي.<br>
+       لا مشكلة — كل شيء ينتظرك في الصفحة الرئيسية.</p>
+    <a class="btn" href="/">العودة إلى الرئيسية</a>
+  </div>
+</body>
+</html>

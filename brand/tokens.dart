@@ -23,8 +23,17 @@ class NawahColors {
   static const primaryDark = Color(0xFF1D4ED8);
   static const primarySoft = Color(0xFFDBEAFE);
 
-  static const accent     = Color(0xFFF59E0B);
-  static const accentSoft = Color(0xFFFEF3C7);
+  static const accent     = Color(0xFFF7931E);  // برتقالي الهوية من شعار FlexMind
+  static const accentLite = Color(0xFFFBB040);
+  static const accentSoft = Color(0xFFFEF0DC);
+
+  // FlexMind — العلامة الفرعية لبرنامج «عقل وجسد»
+  static const fmNavy     = Color(0xFF142A6E);
+  static const fmNavyDeep = Color(0xFF0C1A4A);
+  static const fmBlue     = Color(0xFF3B7DDD);
+  static const fmBlueLite = Color(0xFF6FA3F0);
+  static const fmOrange   = Color(0xFFF7931E);
+  static const fmOrangeLt = Color(0xFFFBB040);
 
   static const cyan   = Color(0xFF06B6D4);
   static const violet = Color(0xFF7C3AED);

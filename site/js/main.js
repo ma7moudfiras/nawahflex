@@ -236,6 +236,29 @@
       </article>`).join("");
   }
 
+  /** FlexMind — العلامة الفرعية. تعرض الشعار الرسمي إن وُجد، وإلا شعاراً نصّياً. */
+  function buildFlexMind() {
+    const f = S.flexmind;
+    if (!f) return;
+
+    $("#fmMark").innerHTML = f.logo
+      ? `<img src="${esc(f.logo)}" alt="${esc(f.name)} — ${esc(f.tagline)}">`
+      : `<div class="fm__wordmark">Flex<b>Mind</b></div>
+         <div class="fm__tagline">${esc(f.tagline)}</div>`;
+
+    $("#fmLead").textContent = f.lead;
+    $("#fmBody").textContent = f.body;
+
+    $("#fmFacts").innerHTML = f.facts.map((x) => `
+      <div class="fm__fact"><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join("");
+
+    $("#fmPillars").innerHTML = f.pillars.map((p) => `
+      <article class="fm__pillar">
+        <div class="fm__pillar-ico">${esc(p.icon)}</div>
+        <div><h3>${esc(p.title)}</h3><p>${esc(p.text)}</p></div>
+      </article>`).join("");
+  }
+
   function buildEvents() {
     $("#eventsGrid").innerHTML = S.events.map((e) => `
       <article class="event">
@@ -510,6 +533,7 @@
   buildStats();
   buildAbout();
   buildPrograms();
+  buildFlexMind();
   buildEvents();
   buildAchievements();
   buildPartners();

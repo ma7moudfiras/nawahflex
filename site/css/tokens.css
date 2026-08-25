@@ -16,13 +16,24 @@
   --c-primary-dark: #1D4ED8;
   --c-primary-soft: #DBEAFE;
 
-  --c-accent:       #F59E0B;   /* الكهرماني — الإنجازات والتمييز */
-  --c-accent-soft:  #FEF3C7;
+  --c-accent:       #F7931E;   /* برتقالي الهوية — مأخوذ من شعار FlexMind */
+  --c-accent-lite:  #FBB040;
+  --c-accent-soft:  #FEF0DC;
 
   --c-cyan:         #06B6D4;   /* السماوي — الروبوت والتقنية */
   --c-violet:       #7C3AED;   /* البنفسجي — الذكاء الاصطناعي */
   --c-green:        #10B981;   /* الأخضر — النجاح والتأكيد */
   --c-rose:         #F43F5E;
+
+  /* ---- FlexMind — العلامة الفرعية لبرنامج «عقل وجسد» ----
+     مأخوذة حرفياً من شعار العميل. تُستعمل داخل قسم FlexMind فقط،
+     ولا تحلّ محل ألوان الأكاديمية في باقي الموقع. */
+  --c-fm-navy:      #142A6E;
+  --c-fm-navy-deep: #0C1A4A;
+  --c-fm-blue:      #3B7DDD;
+  --c-fm-blue-lite: #6FA3F0;
+  --c-fm-orange:    #F7931E;
+  --c-fm-orange-lt: #FBB040;
 
   /* ---- الأسطح ---- */
   --c-bg:           #FFFFFF;
