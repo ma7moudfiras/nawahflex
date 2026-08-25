@@ -21,3 +21,5 @@ app/**/GeneratedPluginRegistrant.*
 # ملفات بيئة — لا تُرفع أبداً
 .env
 .env.*
+
+# Flutter — مخرجات البناء

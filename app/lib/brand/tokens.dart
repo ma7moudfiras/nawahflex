@@ -111,12 +111,34 @@ class NawahTheme {
             side: const BorderSide(color: NawahColors.border),
           ),
         ),
+        // ⚠️ fontFamily صريح هنا ضرورة لا زينة: styleFrom يبني TextStyle
+        // جديداً لا يرث خط الثيم، فيسقط النص العربي إلى الخط الافتراضي
+        // (Roboto) الذي لا يملك محارف عربية فيظهر مربّعات فارغة.
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             backgroundColor: NawahColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
             shape: const StadiumBorder(),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+              fontFamily: NawahFonts.body,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            textStyle: const TextStyle(
+              fontFamily: NawahFonts.body,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            textStyle: const TextStyle(
+              fontFamily: NawahFonts.body,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(

@@ -79,9 +79,9 @@ nawahflex/
 │  ├─ manifest.webmanifest      يجعل الموقع قابلاً للتثبيت على الجوال (PWA)
 │  ├─ robots.txt · sitemap.xml
 │
-├─ brand/tokens.dart            مرآة tokens.css لتطبيق Flutter
+├─ app/                         تطبيق Flutter — لوحة الإدارة
+│  └─ lib/brand/tokens.dart     ★ مرآة tokens.css — مصدر الهوية في Flutter
 ├─ supabase/migrations/         مخطط قاعدة البيانات + سياسات RLS
-├─ app/                         Flutter — المرحلة الثانية (فارغ حالياً)
 └─ vercel.json                  إعدادات النشر (outputDirectory: site)
 ```
 
@@ -107,7 +107,7 @@ nawahflex/
 
 ### الألوان من الرموز فقط
 استعمل `var(--c-primary)` وأخواتها. **ممنوع** كتابة `#2563EB` في `style.css`.
-عند إضافة لون جديد: أضفه في `tokens.css` **و** `brand/tokens.dart` معاً.
+عند إضافة لون جديد: أضفه في `site/css/tokens.css` **و** `app/lib/brand/tokens.dart` معاً.
 
 البرتقالي `--c-accent` مأخوذ حرفياً من شعار FlexMind (`#F7931E`) لتتوحّد
 العلامتان. ورموز `--c-fm-*` محجوزة لقسم FlexMind وحده.
@@ -146,7 +146,7 @@ nawahflex/
 | الطلب | المكان |
 |---|---|
 | تعديل نص/رقم/بطاقة | `site/js/content.js` |
-| تغيير لون أو خط | `site/css/tokens.css` **و** `brand/tokens.dart` |
+| تغيير لون أو خط | `site/css/tokens.css` **و** `app/lib/brand/tokens.dart` |
 | إضافة قسم جديد | `index.html` (البنية) + `style.css` (قسم مرقّم جديد) + `content.js` (البيانات) + دالة `buildX()` في `main.js` |
 | تعديل محتوى FlexMind | `content.js` ← الكائن `flexmind` |
 | وضع شعار FlexMind الرسمي | ضع الملف في `site/assets/` واملأ `flexmind.logo` |
@@ -180,10 +180,27 @@ npx serve site        # أو: python3 -m http.server -d site 8000
 
 ---
 
-## ٨. المرحلة الثانية — عند البدء بـ Flutter
+## ٨. تطبيق Flutter — لوحة الإدارة
 
-1. `flutter create app --org com.nawahflex --platforms=web,android,ios`
-2. انسخ `brand/tokens.dart` إلى `app/lib/brand/`
-3. استخدم Supabase نفسها — لا تُنشئ قاعدة ثانية
-4. ابنِ الويب إلى `site/app/` كي يُنشر مع الموقع على نفس النطاق
-5. `site/` و `app/` مستقلان تماماً — لا تُدخل بينهما ارتباطات بنائية
+```bash
+export PATH="/opt/flutter/bin:$PATH"
+cd app
+flutter analyze && flutter test
+flutter build web --release --base-href /app/ --no-web-resources-cdn
+```
+
+**قرارات لا تُنقض دون سبب:**
+
+- `--no-web-resources-cdn` **إلزامي**: بدونه يُحمَّل CanvasKit من `gstatic.com`،
+  فتتوقّف اللوحة كلياً إن تعذّر الوصول إليه. النسخة المحلية مضمَّنة في البناء.
+- **الخطوط مضمَّنة** في `app/assets/fonts/` لا محمَّلة من الشبكة — على أندرويد
+  و iOS لا ضمان بوجود خط عربي، وبدونها يظهر النص مربّعات فارغة.
+- أي `textStyle` صريح في ثيم مكوّن (زر مثلاً) **يجب أن يحمل `fontFamily`** —
+  لأن `styleFrom` يبني نمطاً جديداً لا يرث خط الثيم فيسقط العربي إلى Roboto.
+- `main()` **لا ينتظر Supabase بلا حدّ** قبل `runApp` — مهلة ١٥ ثانية ثم شاشة
+  خطأ واضحة، وإلا رأى المستخدم شاشة بيضاء صامتة عند انقطاع الشبكة.
+- الصلاحية تُفحص في الواجهة **وفي RLS معاً** — الواجهة للراحة، والقاعدة للأمان.
+
+**التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
+والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي
+إلى تنقّل جانبي، وعند ١١٠٠px يتمدّد الشريط وتظهر شاشة الرسائل بعمودين.
