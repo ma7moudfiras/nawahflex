@@ -79,10 +79,13 @@ nawahflex/
 │  ├─ manifest.webmanifest      يجعل الموقع قابلاً للتثبيت على الجوال (PWA)
 │  ├─ robots.txt · sitemap.xml
 │
+├─ scripts/build.sh             يبني اللوحة على Vercel إلى site/app/
 ├─ app/                         تطبيق Flutter — لوحة الإدارة
 │  └─ lib/brand/tokens.dart     ★ مرآة tokens.css — مصدر الهوية في Flutter
 ├─ supabase/migrations/         مخطط قاعدة البيانات + سياسات RLS
 └─ vercel.json                  إعدادات النشر (outputDirectory: site)
+
+⚠️ `site/app/` مخرجات بناء — تُولَّد على Vercel ولا تدخل git.
 ```
 
 ★ = الملفان اللذان يُعدَّلان في ٩٠٪ من الطلبات.
@@ -201,6 +204,11 @@ cd app
 flutter analyze && flutter test
 flutter build web --release --base-href /app/ --no-web-resources-cdn
 ```
+
+**النشر:** `scripts/build.sh` يُستدعى من `vercel.json` فيبني اللوحة إلى
+`site/app/` عند كل نشر. **فشل بناء اللوحة لا يمنع نشر الموقع** — السكربت
+ينتهي بنجاح دائماً ويطبع تحذيراً، فيعود `/app` إلى 404 حتى يُصلَح. الموقع
+هو ما يراه الزوّار وجوجل؛ اللوحة أداة داخلية ولا يجوز أن تُسقطه معها.
 
 **قرارات لا تُنقض دون سبب:**
 

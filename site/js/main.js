@@ -241,10 +241,22 @@
     const f = S.flexmind;
     if (!f) return;
 
-    $("#fmMark").innerHTML = f.logo
-      ? `<img src="${esc(f.logo)}" alt="${esc(f.name)} — ${esc(f.tagline)}">`
-      : `<div class="fm__wordmark">Flex<b>Mind</b></div>
-         <div class="fm__tagline">${esc(f.tagline)}</div>`;
+    const wordmark =
+      `<div class="fm__wordmark">Flex<b>Mind</b></div>
+       <div class="fm__tagline">${esc(f.tagline)}</div>`;
+
+    const mark = $("#fmMark");
+    if (f.logo) {
+      mark.innerHTML = `<img src="${esc(f.logo)}" alt="${esc(f.name)} — ${esc(f.tagline)}">`;
+      // لو كان المسار خاطئاً أو الملف ناقصاً، نعود للشعار النصّي بدل أن
+      // يرى الزائر أيقونة صورة مكسورة في قسم العلامة.
+      $("img", mark).addEventListener("error", () => {
+        console.warn("[flexmind] تعذّر تحميل الشعار:", f.logo);
+        mark.innerHTML = wordmark;
+      });
+    } else {
+      mark.innerHTML = wordmark;
+    }
 
     $("#fmLead").textContent = f.lead;
     $("#fmBody").textContent = f.body;
