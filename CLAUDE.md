@@ -123,6 +123,11 @@ nawahflex/
 - `config.js` يحمل المفتاح العلني (anon) فقط — وهو مصمّم ليكون مكشوفاً.
   **⛔ `service_role` key لا يقترب من `site/` أبداً.**
 - الحماية الحقيقية في سياسات RLS داخل `supabase/migrations/`.
+- **الدوال المساعدة تعيش في مخطط `private` لا `public`** — لأن PostgREST يكشف
+  كل دوال `public` كنقاط `/rest/v1/rpc/*`. أي دالة `SECURITY DEFINER` جديدة
+  مكانها `private`. وانتبه: سياسات RLS تُقيَّم بصلاحيات الدور المستعلِم، فأي
+  دالة تستدعيها سياسة تحتاج `grant execute` لـ `anon` و `authenticated`.
+- بعد أي تعديل على المخطط، شغّل فاحص Supabase الأمني وتأكّد أنه نظيف.
 
 ### الأداء
 الموقع يجب أن يبقى تحت ثانية واحدة لأول رسم. قبل إضافة أي شيء ثقيل
@@ -145,7 +150,7 @@ nawahflex/
 | إضافة قسم جديد | `index.html` (البنية) + `style.css` (قسم مرقّم جديد) + `content.js` (البيانات) + دالة `buildX()` في `main.js` |
 | تعديل محتوى FlexMind | `content.js` ← الكائن `flexmind` |
 | وضع شعار FlexMind الرسمي | ضع الملف في `site/assets/` واملأ `flexmind.logo` |
-| ربط Supabase | املأ `site/js/config.js` بعد تطبيق الميغريشن |
+| ربط Supabase | مربوط بالفعل — مشروع `nawahflex` والمفاتيح في `site/js/config.js` |
 | تعديل عنوان/وصف البحث | `site/index.html` — وسوم `<title>` و `<meta>` و OG |
 | نقل المحتوى إلى القاعدة | أضف دوال قراءة في `api.js` — أسماء الحقول في الجداول مطابقة لـ `content.js` عمداً |
 
