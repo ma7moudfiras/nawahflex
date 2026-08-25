@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nawahflex.com/sitemap.xml
+Sitemap: https://nawahflex.org/sitemap.xml
