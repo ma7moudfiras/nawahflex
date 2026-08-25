@@ -90,7 +90,8 @@ supabase/migrations/0002_move_helpers_to_private_schema.sql
 ## بنية المستودع
 
 ```
-site/        الموقع التعريفي (مجلد النشر)
+site/        الموقع التعريفي (مجلد النشر) — و site/app/ مخرجات اللوحة
+scripts/     سكربت البناء على Vercel
 app/         تطبيق Flutter — لوحة الإدارة (ويب + أندرويد + iOS)
 supabase/    مخطط قاعدة البيانات وسياسات الحماية
 CLAUDE.md    دليل المعمارية وقواعد التطوير

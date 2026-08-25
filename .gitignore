@@ -23,3 +23,6 @@ app/**/GeneratedPluginRegistrant.*
 .env.*
 
 # Flutter — مخرجات البناء
+
+# مخرجات بناء لوحة Flutter — تُبنى على Vercel لا تُرفع
+site/app/

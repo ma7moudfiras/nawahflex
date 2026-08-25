@@ -44,6 +44,24 @@
       ]
     },
     {
+      "source": "/app/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/app/canvaskit/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
       "source": "/assets/fonts/(.*)",
       "headers": [
         {
@@ -61,5 +79,7 @@
         }
       ]
     }
-  ]
+  ],
+  "buildCommand": "bash scripts/build.sh",
+  "installCommand": "echo 'لا اعتماديات npm — الموقع HTML/CSS/JS خالص'"
 }
