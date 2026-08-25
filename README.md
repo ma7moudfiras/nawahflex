@@ -18,7 +18,7 @@
 
 | | |
 |---|---|
-| **الواجهة** | HTML · CSS · JavaScript (صفر اعتماديات) |
+| **الواجهة** | HTML · CSS · JavaScript (صفر اعتماديات، صفر نطاقات خارجية) |
 | **قاعدة البيانات** | Supabase (PostgreSQL + RLS + Storage) |
 | **النشر** | Vercel |
 | **إدارة الإصدارات** | GitHub |
@@ -91,9 +91,8 @@ supabase/migrations/0002_move_helpers_to_private_schema.sql
 
 ```
 site/        الموقع التعريفي (مجلد النشر)
-brand/       رموز الهوية البصرية لتطبيق Flutter
+app/         تطبيق Flutter — لوحة الإدارة (ويب + أندرويد + iOS)
 supabase/    مخطط قاعدة البيانات وسياسات الحماية
-app/         تطبيق Flutter — المرحلة الثانية
 CLAUDE.md    دليل المعمارية وقواعد التطوير
 ```
 
