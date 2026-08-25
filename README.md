@@ -46,7 +46,7 @@ npx serve site
 academy: {
   whatsapp: "970599000000",   // بدون + وبدون مسافات
   phone: "+970 599 000 000",
-  email: "info@nawahflex.com",
+  email: "info@nawahflex.org",
 }
 ```
 

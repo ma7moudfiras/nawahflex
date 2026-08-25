@@ -38,8 +38,8 @@
 ## ٢. المعمارية — والقرار الذي بُنيت عليه
 
 ```
-nawahflex.com/       →  site/     HTML/CSS/JS خالص، صفر build step
-nawahflex.com/app/   →  app/      تطبيق Flutter (لم يبدأ بعد)
+nawahflex.org/       →  site/     HTML/CSS/JS خالص، صفر build step
+nawahflex.org/app/   →  app/      تطبيق Flutter (لم يبدأ بعد)
 APK / App Store      →  app/      نفس كود Flutter
                           ↓
                       Supabase    قاعدة البيانات + المصادقة + تخزين الصور
