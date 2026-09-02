@@ -3,6 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
+import '../programs/program.dart';
+import '../programs/programs_repository.dart';
 import 'student.dart';
 import 'student_form.dart';
 import 'students_repository.dart';
@@ -18,8 +20,10 @@ class StudentsScreen extends StatefulWidget {
 
 class _StudentsScreenState extends State<StudentsScreen> {
   final _repo = const StudentsRepository();
+  final _programsRepo = const ProgramsRepository();
   final _search = TextEditingController();
   List<Student> _items = [];
+  List<Program> _programs = [];
   Student? _selected;
   bool _activeOnly = true;
   bool _loading = true;
@@ -29,6 +33,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
   void initState() {
     super.initState();
     _load();
+    // فشل تحميل البرامج ليس مانعاً لإدارة الطلاب — يُخفي فقط قسم الاختيار
+    // المتعدد في النموذج (StudentForm يتعامل مع قائمة فارغة بصمت).
+    _programsRepo.fetch().then((p) { if (mounted) setState(() => _programs = p); }).catchError((_) {});
   }
 
   @override
@@ -55,12 +62,14 @@ class _StudentsScreenState extends State<StudentsScreen> {
 
   Future<void> _openForm({Student? existing}) async {
     final isWide = context.isWide;
-    Future<void> onSubmit(Student s) async {
-      if (existing == null) {
-        await _repo.create(s);
-      } else {
-        await _repo.update(existing.id, s);
-      }
+    final initialProgramIds =
+        existing == null ? <String>[] : await _repo.fetchProgramIds(existing.id);
+    if (!mounted) return;
+
+    Future<void> onSubmit(Student s, List<String> programIds) async {
+      final id = existing == null ? await _repo.create(s) : existing.id;
+      if (existing != null) await _repo.update(existing.id, s);
+      await _repo.setPrograms(id, programIds);
       await _load();
     }
 
@@ -70,7 +79,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
         builder: (_) => Dialog(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
-            child: StudentForm(initial: existing, onSubmit: onSubmit),
+            child: StudentForm(
+              initial: existing,
+              onSubmit: onSubmit,
+              allPrograms: _programs,
+              initialProgramIds: initialProgramIds,
+            ),
           ),
         ),
       );
@@ -78,7 +92,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        builder: (_) => StudentForm(initial: existing, onSubmit: onSubmit),
+        builder: (_) => StudentForm(
+          initial: existing,
+          onSubmit: onSubmit,
+          allPrograms: _programs,
+          initialProgramIds: initialProgramIds,
+        ),
       );
     }
   }
@@ -295,6 +314,22 @@ class _Detail extends StatelessWidget {
               child: Text('${student.age} سنة${student.gender == 'm' ? ' · ذكر' : student.gender == 'f' ? ' · أنثى' : ''}',
                   style: const TextStyle(color: NawahColors.textMuted, fontSize: 13)),
             ),
+
+          if (student.programTitles.isNotEmpty) ...[
+            const SizedBox(height: NawahSpacing.s3),
+            Wrap(
+              spacing: NawahSpacing.s2,
+              runSpacing: NawahSpacing.s2,
+              children: student.programTitles
+                  .map((t) => Chip(
+                        label: Text(t, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: NawahColors.primarySoft,
+                        side: BorderSide.none,
+                        visualDensity: VisualDensity.compact,
+                      ))
+                  .toList(),
+            ),
+          ],
 
           const SizedBox(height: NawahSpacing.s5),
           if (student.guardianName != null && student.guardianName!.isNotEmpty) ...[

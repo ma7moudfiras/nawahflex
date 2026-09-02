@@ -61,4 +61,30 @@ void main() {
       expect(m['guardian_phone'], '0599123456');
     });
   });
+
+  group('fromMap — برامج الطالب المضمَّنة', () {
+    test('يستخرج عناوين البرامج من student_programs المضمَّنة', () {
+      final st = Student.fromMap({
+        'id': 'x',
+        'full_name': 'محمود',
+        'is_active': true,
+        'created_at': DateTime(2026).toIso8601String(),
+        'student_programs': [
+          {'program_id': 'p1', 'programs': {'id': 'p1', 'title': 'RoboMission Elementary'}},
+          {'program_id': 'p2', 'programs': {'id': 'p2', 'title': 'الحساب الذهني'}},
+        ],
+      });
+      expect(st.programTitles, ['RoboMission Elementary', 'الحساب الذهني']);
+    });
+
+    test('بلا برامج مضمَّنة ترجع قائمة فارغة لا خطأ', () {
+      final st = Student.fromMap({
+        'id': 'x',
+        'full_name': 'محمود',
+        'is_active': true,
+        'created_at': DateTime(2026).toIso8601String(),
+      });
+      expect(st.programTitles, isEmpty);
+    });
+  });
 }

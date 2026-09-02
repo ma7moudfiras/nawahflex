@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../programs/program.dart';
 import 'student.dart';
 
 /// نموذج إضافة/تعديل طالب — يُفتح كـ bottom sheet على الجوّال وحوار على الأوسع،
 /// القرار يتّخذه المستدعي عبر showModalBottomSheet أو showDialog حسب الحجم.
 class StudentForm extends StatefulWidget {
-  const StudentForm({super.key, this.initial, required this.onSubmit});
+  const StudentForm({
+    super.key,
+    this.initial,
+    required this.onSubmit,
+    this.allPrograms = const [],
+    this.initialProgramIds = const [],
+  });
 
   final Student? initial;
-  final Future<void> Function(Student student) onSubmit;
+  final Future<void> Function(Student student, List<String> programIds) onSubmit;
+
+  /// كتالوج البرامج للاختيار المتعدد. قائمة فارغة تُخفي القسم بالكامل —
+  /// لا حاجة لإجبار الشاشات الأخرى على تحميل البرامج قبل استعمال النموذج.
+  final List<Program> allPrograms;
+  final List<String> initialProgramIds;
 
   @override
   State<StudentForm> createState() => _StudentFormState();
@@ -24,6 +36,7 @@ class _StudentFormState extends State<StudentForm> {
   late final TextEditingController _notes;
   DateTime? _birthDate;
   String? _gender;
+  late Set<String> _selectedProgramIds;
   bool _busy = false;
 
   @override
@@ -37,6 +50,7 @@ class _StudentFormState extends State<StudentForm> {
     _notes = TextEditingController(text: s?.notes ?? '');
     _birthDate = s?.birthDate;
     _gender = s?.gender;
+    _selectedProgramIds = widget.initialProgramIds.toSet();
   }
 
   @override
@@ -63,18 +77,21 @@ class _StudentFormState extends State<StudentForm> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await widget.onSubmit(Student(
-        id: widget.initial?.id ?? '',
-        fullName: _name.text.trim(),
-        birthDate: _birthDate,
-        gender: _gender,
-        guardianName: _guardianName.text.trim(),
-        guardianPhone: _guardianPhone.text.trim(),
-        guardianEmail: _guardianEmail.text.trim(),
-        notes: _notes.text.trim(),
-        isActive: widget.initial?.isActive ?? true,
-        createdAt: widget.initial?.createdAt ?? DateTime.now(),
-      ));
+      await widget.onSubmit(
+        Student(
+          id: widget.initial?.id ?? '',
+          fullName: _name.text.trim(),
+          birthDate: _birthDate,
+          gender: _gender,
+          guardianName: _guardianName.text.trim(),
+          guardianPhone: _guardianPhone.text.trim(),
+          guardianEmail: _guardianEmail.text.trim(),
+          notes: _notes.text.trim(),
+          isActive: widget.initial?.isActive ?? true,
+          createdAt: widget.initial?.createdAt ?? DateTime.now(),
+        ),
+        _selectedProgramIds.toList(),
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -143,6 +160,40 @@ class _StudentFormState extends State<StudentForm> {
                 ],
               ),
               const SizedBox(height: NawahSpacing.s5),
+
+              if (widget.allPrograms.isNotEmpty) ...[
+                const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('البرامج المسجَّل بها',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: NawahColors.textSoft)),
+                ),
+                const SizedBox(height: NawahSpacing.s2),
+                Wrap(
+                  spacing: NawahSpacing.s2,
+                  runSpacing: NawahSpacing.s2,
+                  children: widget.allPrograms.map((p) {
+                    final selected = _selectedProgramIds.contains(p.id);
+                    final age = Student.ageFrom(_birthDate);
+                    final outOfRange = age != null && !p.fitsAge(age);
+                    final label = p.ageRangeLabel.isEmpty ? p.title : '${p.title} (${p.ageRangeLabel})';
+                    return FilterChip(
+                      label: Text(label),
+                      selected: selected,
+                      onSelected: (v) => setState(() {
+                        if (v) {
+                          _selectedProgramIds.add(p.id);
+                        } else {
+                          _selectedProgramIds.remove(p.id);
+                        }
+                      }),
+                      backgroundColor: outOfRange ? NawahColors.accentSoft : null,
+                      selectedColor: outOfRange ? NawahColors.accentSoft : NawahColors.primarySoft,
+                      side: outOfRange ? const BorderSide(color: NawahColors.accent) : null,
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: NawahSpacing.s5),
+              ],
 
               const Align(
                 alignment: AlignmentDirectional.centerStart,

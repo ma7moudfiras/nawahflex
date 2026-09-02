@@ -12,6 +12,7 @@ class Student {
     this.guardianEmail,
     this.notes,
     this.photoUrl,
+    this.programTitles = const [],
   });
 
   final String id;
@@ -25,11 +26,13 @@ class Student {
   final String? photoUrl;
   final bool isActive;
   final DateTime createdAt;
+  final List<String> programTitles;
 
   String get initial => fullName.trim().isEmpty ? '؟' : fullName.trim()[0];
 
-  int? get age {
-    final b = birthDate;
+  int? get age => ageFrom(birthDate);
+
+  static int? ageFrom(DateTime? b) {
     if (b == null) return null;
     final now = DateTime.now();
     var a = now.year - b.year;
@@ -58,6 +61,11 @@ class Student {
         photoUrl: m['photo_url'] as String?,
         isActive: (m['is_active'] as bool?) ?? true,
         createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+        programTitles: ((m['student_programs'] as List?) ?? const [])
+            .map((sp) => (sp as Map<String, dynamic>)['programs'] as Map<String, dynamic>?)
+            .whereType<Map<String, dynamic>>()
+            .map((p) => p['title'] as String)
+            .toList(),
       );
 
   Map<String, dynamic> toInsertMap() => {
