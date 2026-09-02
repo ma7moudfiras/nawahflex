@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import '../auth/profile.dart';
+import '../students/students_repository.dart';
+import '../trainers/trainers_repository.dart';
 
 /// نظرة عامة — أرقام سريعة وروابط للمهام الشائعة.
 /// الشبكة تتكيّف: عمود على الجوّال، عمودان على اللوحي، أربعة على المكتب.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.profile,
@@ -19,7 +21,28 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onGoToMessages;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _studentsRepo = const StudentsRepository();
+  final _trainersRepo = const TrainersRepository();
+  int? _studentCount;
+  int? _trainerCount;
+
+  @override
+  void initState() {
+    super.initState();
+    // فشل تحميل العدّادين لا يمنع عرض الشاشة — يبقيان فارغين (—) بصمت.
+    _studentsRepo.count().then((c) { if (mounted) setState(() => _studentCount = c); }).catchError((_) {});
+    _trainersRepo.count().then((c) { if (mounted) setState(() => _trainerCount = c); }).catchError((_) {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final profile = widget.profile;
+    final counts = widget.counts;
+    final onGoToMessages = widget.onGoToMessages;
     final cols = adaptive(context, mobile: 1, tablet: 2, desktop: 4);
 
     return SingleChildScrollView(
@@ -79,6 +102,37 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
 
+          const SizedBox(height: NawahSpacing.s6),
+          GridView.count(
+            crossAxisCount: cols,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: NawahSpacing.s4,
+            mainAxisSpacing: NawahSpacing.s4,
+            childAspectRatio:
+                adaptive(context, mobile: 3.4, tablet: 2.1, desktop: 1.7),
+            children: [
+              _Stat(
+                icon: Icons.groups_outlined,
+                tone: NawahColors.cyan,
+                value: _studentCount == null ? '—' : '$_studentCount',
+                label: 'طالب مسجَّل',
+              ),
+              _Stat(
+                icon: Icons.badge_outlined,
+                tone: NawahColors.primaryDark,
+                value: _trainerCount == null ? '—' : '$_trainerCount',
+                label: 'مدرّب',
+              ),
+              _Stat(
+                icon: Icons.receipt_long_outlined,
+                tone: NawahColors.textMuted,
+                value: 'قريباً',
+                label: 'المستحقات — سجلّ الدفعات',
+              ),
+            ],
+          ),
+
           const SizedBox(height: NawahSpacing.s7),
           Container(
             padding: const EdgeInsets.all(NawahSpacing.s5),
@@ -100,9 +154,9 @@ class HomeScreen extends StatelessWidget {
                 ]),
                 SizedBox(height: NawahSpacing.s3),
                 Text(
-                  'الرسائل جاهزة وتعمل. إدارة الطلاب والمدرّبين والدورات والحضور '
-                  'والشهادات هي المرحلة التالية — جداولها لم تُبنَ بعد لأنها تحتاج '
-                  'قرارات حول تنظيم الأفواج وإصدار الشهادات وحسابات أولياء الأمور.',
+                  'الرسائل والطلاب والبرامج والمدرّبون والأفواج والحضور جاهزة وتعمل. '
+                  'الشهادات، حسابات أولياء الأمور، وسجلّ المستحقات (مين دفع ومين لا) '
+                  'هي المرحلة التالية — لم تُبنَ بعد.',
                   style: TextStyle(color: NawahColors.textSoft, height: 1.9),
                 ),
               ],

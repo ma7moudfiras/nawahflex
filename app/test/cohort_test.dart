@@ -34,6 +34,29 @@ void main() {
       expect(c.programTitle, isNull);
       expect(c.trainerName, isNull);
     });
+
+    test('enrollments(count) المضمَّن من PostgREST يُقرأ كعدد طلاب', () {
+      final c = Cohort.fromMap({
+        'id': 'c1',
+        'name': 'فوج',
+        'is_active': true,
+        'created_at': DateTime(2026).toIso8601String(),
+        'enrollments': [
+          {'count': 3},
+        ],
+      });
+      expect(c.enrolledCount, 3);
+    });
+
+    test('بلا enrollments مضمَّن يرجع صفراً لا خطأ', () {
+      final c = Cohort.fromMap({
+        'id': 'c1',
+        'name': 'فوج',
+        'is_active': true,
+        'created_at': DateTime(2026).toIso8601String(),
+      });
+      expect(c.enrolledCount, 0);
+    });
   });
 
   group('toInsertMap', () {

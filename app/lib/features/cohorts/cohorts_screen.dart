@@ -115,7 +115,7 @@ class _CohortsScreenState extends State<CohortsScreen> {
             crossAxisCount: columns,
             mainAxisSpacing: NawahSpacing.s3,
             crossAxisSpacing: NawahSpacing.s3,
-            mainAxisExtent: 170,
+            mainAxisExtent: 190,
           ),
           itemCount: _items.length,
           itemBuilder: (_, i) => _CohortCard(cohort: _items[i], onTap: () => _openForm(existing: _items[i])),
@@ -170,6 +170,14 @@ class _CohortCard extends StatelessWidget {
                       decoration: BoxDecoration(color: NawahColors.bgAlt, borderRadius: BorderRadius.circular(NawahRadius.full)),
                       child: const Text('متوقّف', style: TextStyle(fontSize: 10, color: NawahColors.textMuted)),
                     ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(Icons.groups_outlined, size: 13, color: NawahColors.textMuted),
+                  const SizedBox(width: 4),
+                  Text('${cohort.enrolledCount} طالب', style: const TextStyle(fontSize: 11, color: NawahColors.textMuted)),
                 ],
               ),
               const SizedBox(height: NawahSpacing.s2),

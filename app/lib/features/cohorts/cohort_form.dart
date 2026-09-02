@@ -214,10 +214,10 @@ class _CohortFormState extends State<CohortForm> {
 
               if (widget.allStudents.isNotEmpty) ...[
                 const SizedBox(height: NawahSpacing.s5),
-                const Align(
+                Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: Text('الطلاب المسجَّلون بهذا الفوج',
-                      style: TextStyle(fontWeight: FontWeight.w700, color: NawahColors.textSoft)),
+                  child: Text('الطلاب المسجَّلون بهذا الفوج (${_selectedStudentIds.length})',
+                      style: const TextStyle(fontWeight: FontWeight.w700, color: NawahColors.textSoft)),
                 ),
                 const SizedBox(height: NawahSpacing.s2),
                 Wrap(

@@ -8,7 +8,7 @@ class CohortsRepository {
   const CohortsRepository();
 
   static const _cols = 'id, name, program_id, trainer_id, schedule_label, starts_at, ends_at, '
-      'capacity, is_active, created_at, programs(title), profiles(full_name)';
+      'capacity, is_active, created_at, programs(title), profiles(full_name), enrollments(count)';
 
   Future<List<Cohort>> fetch() async {
     final rows = await Db.client.from('cohorts').select(_cols).order('name');

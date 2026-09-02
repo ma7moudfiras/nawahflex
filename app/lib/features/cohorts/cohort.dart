@@ -14,6 +14,7 @@ class Cohort {
     this.startsAt,
     this.endsAt,
     this.capacity,
+    this.enrolledCount = 0,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class Cohort {
   final int? capacity;
   final bool isActive;
   final DateTime createdAt;
+  final int enrolledCount;
 
   factory Cohort.fromMap(Map<String, dynamic> m) => Cohort(
         id: m['id'] as String,
@@ -42,7 +44,17 @@ class Cohort {
         capacity: (m['capacity'] as num?)?.toInt(),
         isActive: (m['is_active'] as bool?) ?? true,
         createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+        enrolledCount: _countFrom(m['enrollments']),
       );
+
+  /// يقرأ عدّاد enrollments(count) المضمَّن من PostgREST — يرجع صفراً إن
+  /// لم يكن العمود مضمَّناً بالاستعلام أصلاً (لا خطأ).
+  static int _countFrom(Object? embedded) {
+    if (embedded is! List || embedded.isEmpty) return 0;
+    final first = embedded.first;
+    if (first is! Map<String, dynamic>) return 0;
+    return (first['count'] as num?)?.toInt() ?? 0;
+  }
 
   Map<String, dynamic> toInsertMap() => {
         'name': name,
