@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import 'brand/tokens.dart';
 import 'core/reload.dart';
 import 'core/supabase.dart';
+import 'features/attendance/attendance_screen.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_screen.dart';
+import 'features/cohorts/cohorts_screen.dart';
 import 'features/dashboard/home_screen.dart';
 import 'features/messages/messages_screen.dart';
 import 'features/programs/programs_screen.dart';
@@ -154,8 +156,9 @@ class _Gate extends StatelessWidget {
 
     // الصلاحية تُفحص هنا للواجهة، لكن الحماية الحقيقية في RLS —
     // حتى لو تجاوز أحدهم هذه الشاشة، لن يعيد له الخادم صفاً واحداً.
+    // المدرّب يدخل أيضاً (لشاشة الحضور فقط) — وليس الإدارة/التحرير حصراً.
     final p = auth.profile;
-    if (p == null || !p.canManage) {
+    if (p == null || !(p.canManage || p.isTrainer)) {
       return _NoAccess(auth: auth);
     }
 
@@ -225,45 +228,73 @@ class _DashboardShellState extends State<DashboardShell> {
 
   @override
   Widget build(BuildContext context) {
+    final p = widget.auth.profile;
+    // المدرّب يرى شاشة الحضور فقط — صلاحياته محصورة بحضور طلاب أفواجه،
+    // لا إدارة الطلاب/البرامج/الأفواج نفسها (قرار متَّخذ مسبقاً). الإدارة
+    // والمحرّر يرون اللوحة كاملة، وشاشة الحضور أيضاً لتتبّع/تصحيح يدوي.
+    final canManage = p?.canManage ?? false;
+    final canMarkAttendance = canManage || (p?.isTrainer ?? false);
+
     final items = <NavItem>[
-      const NavItem(
-        label: 'نظرة عامة',
-        icon: Icons.dashboard_outlined,
-        selectedIcon: Icons.dashboard,
-      ),
-      NavItem(
-        label: 'الرسائل',
-        icon: Icons.inbox_outlined,
-        selectedIcon: Icons.inbox,
-      ).withBadge(_counts['new'] ?? 0),
-      const NavItem(
-        label: 'الطلاب',
-        icon: Icons.groups_outlined,
-        selectedIcon: Icons.groups,
-      ),
-      const NavItem(
-        label: 'البرامج',
-        icon: Icons.school_outlined,
-        selectedIcon: Icons.school,
-      ),
+      if (canManage)
+        const NavItem(
+          label: 'نظرة عامة',
+          icon: Icons.dashboard_outlined,
+          selectedIcon: Icons.dashboard,
+        ),
+      if (canManage)
+        NavItem(
+          label: 'الرسائل',
+          icon: Icons.inbox_outlined,
+          selectedIcon: Icons.inbox,
+        ).withBadge(_counts['new'] ?? 0),
+      if (canManage)
+        const NavItem(
+          label: 'الطلاب',
+          icon: Icons.groups_outlined,
+          selectedIcon: Icons.groups,
+        ),
+      if (canManage)
+        const NavItem(
+          label: 'البرامج',
+          icon: Icons.school_outlined,
+          selectedIcon: Icons.school,
+        ),
+      if (canManage)
+        const NavItem(
+          label: 'الأفواج',
+          icon: Icons.groups_2_outlined,
+          selectedIcon: Icons.groups_2,
+        ),
+      if (canMarkAttendance)
+        const NavItem(
+          label: 'الحضور',
+          icon: Icons.checklist_outlined,
+          selectedIcon: Icons.checklist,
+        ),
     ];
 
     final screens = <Widget>[
-      HomeScreen(
-        profile: widget.auth.profile,
-        counts: _counts,
-        onGoToMessages: () => setState(() => _index = 1),
-      ),
-      MessagesScreen(onCountsChanged: _onCounts),
-      const StudentsScreen(),
-      const ProgramsScreen(),
+      if (canManage)
+        HomeScreen(
+          profile: widget.auth.profile,
+          counts: _counts,
+          onGoToMessages: () => setState(() => _index = 1),
+        ),
+      if (canManage) MessagesScreen(onCountsChanged: _onCounts),
+      if (canManage) const StudentsScreen(),
+      if (canManage) const ProgramsScreen(),
+      if (canManage) const CohortsScreen(),
+      if (canMarkAttendance) const AttendanceScreen(),
     ];
 
-    final p = widget.auth.profile;
+    // فهرس آمن دائماً: صلاحية المستخدم (وبالتالي طول القوائم أعلاه) قد
+    // تتغيّر بين بناء وآخر بلا إعادة تشغيل التطبيق.
+    final index = _index < items.length ? _index : 0;
 
     return AppShell(
       items: items,
-      index: _index,
+      index: index,
       onSelect: (i) => setState(() => _index = i),
       account: AccountInfo(
         displayName: p?.displayName ?? '—',
@@ -271,8 +302,8 @@ class _DashboardShellState extends State<DashboardShell> {
         initial: p?.initial ?? '؟',
         onSignOut: widget.auth.signOut,
       ),
-      title: items[_index].label,
-      child: screens[_index],
+      title: items[index].label,
+      child: screens[index],
     );
   }
 }
