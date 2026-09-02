@@ -30,6 +30,12 @@ class StudentsRepository {
     await Db.client.from('students').update({'is_active': active}).eq('id', id);
   }
 
+  /// إجمالي الطلاب المسجَّلين — لبطاقة الإحصاء بالشاشة الرئيسية.
+  Future<int> count() async {
+    final rows = await Db.client.from('students').select('id');
+    return (rows as List).length;
+  }
+
   Future<List<String>> fetchProgramIds(String studentId) async {
     final rows = await Db.client.from('student_programs').select('program_id').eq('student_id', studentId);
     return (rows as List).map((r) => r['program_id'] as String).toList();
