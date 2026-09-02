@@ -11,6 +11,8 @@ import 'features/auth/auth_service.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/home_screen.dart';
 import 'features/messages/messages_screen.dart';
+import 'features/programs/programs_screen.dart';
+import 'features/students/students_screen.dart';
 import 'shared/app_shell.dart';
 import 'shared/nav_item.dart';
 
@@ -234,6 +236,16 @@ class _DashboardShellState extends State<DashboardShell> {
         icon: Icons.inbox_outlined,
         selectedIcon: Icons.inbox,
       ).withBadge(_counts['new'] ?? 0),
+      const NavItem(
+        label: 'الطلاب',
+        icon: Icons.groups_outlined,
+        selectedIcon: Icons.groups,
+      ),
+      const NavItem(
+        label: 'البرامج',
+        icon: Icons.school_outlined,
+        selectedIcon: Icons.school,
+      ),
     ];
 
     final screens = <Widget>[
@@ -243,6 +255,8 @@ class _DashboardShellState extends State<DashboardShell> {
         onGoToMessages: () => setState(() => _index = 1),
       ),
       MessagesScreen(onCountsChanged: _onCounts),
+      const StudentsScreen(),
+      const ProgramsScreen(),
     ];
 
     final p = widget.auth.profile;
