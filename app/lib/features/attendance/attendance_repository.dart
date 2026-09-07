@@ -19,7 +19,9 @@ class AttendanceRepository {
   Future<ClassSession?> fetchSession(String cohortId, DateTime date) async {
     final row = await Db.client
         .from('class_sessions')
-        .select('id, cohort_id, session_date, starts_at, ends_at, notes, trainer_hourly_rate')
+        .select(
+          'id, cohort_id, session_date, starts_at, ends_at, notes, trainer_hourly_rate',
+        )
         .eq('cohort_id', cohortId)
         .eq('session_date', _dateOnly(date))
         .maybeSingle();
@@ -40,27 +42,35 @@ class AttendanceRepository {
     var rate = existing?.trainerHourlyRate;
 
     if (existing == null) {
-      final cohort = await Db.client.from('cohorts').select('trainer_id').eq('id', cohortId).maybeSingle();
+      final cohort = await Db.client
+          .from('cohorts')
+          .select('trainer_id')
+          .eq('id', cohortId)
+          .maybeSingle();
       final trainerId = cohort?['trainer_id'] as String?;
       if (trainerId != null) {
-        final rateRow =
-            await Db.client.from('trainer_pay_rates').select('hourly_rate').eq('profile_id', trainerId).maybeSingle();
+        final rateRow = await Db.client
+            .from('trainer_pay_rates')
+            .select('hourly_rate')
+            .eq('profile_id', trainerId)
+            .maybeSingle();
         if (rateRow != null) rate = (rateRow['hourly_rate'] as num).toDouble();
       }
     }
 
-    final row = await Db.client.from('class_sessions').upsert(
-      {
-        'cohort_id': cohortId,
-        'session_date': _dateOnly(date),
-        'starts_at': ClassSession.formatTime(startsAt),
-        'ends_at': ClassSession.formatTime(endsAt),
-        'notes': notes,
-        'trainer_hourly_rate': rate,
-        if (existing == null) 'created_by': Db.user?.id,
-      },
-      onConflict: 'cohort_id,session_date',
-    ).select('id').single();
+    final row = await Db.client
+        .from('class_sessions')
+        .upsert({
+          'cohort_id': cohortId,
+          'session_date': _dateOnly(date),
+          'starts_at': ClassSession.formatTime(startsAt),
+          'ends_at': ClassSession.formatTime(endsAt),
+          'notes': notes,
+          'trainer_hourly_rate': rate,
+          if (existing == null) 'created_by': Db.user?.id,
+        }, onConflict: 'cohort_id,session_date')
+        .select('id')
+        .single();
     return row['id'] as String;
   }
 
@@ -81,7 +91,10 @@ class AttendanceRepository {
     return list;
   }
 
-  Future<Map<String, String>> fetchStatuses(String cohortId, DateTime date) async {
+  Future<Map<String, String>> fetchStatuses(
+    String cohortId,
+    DateTime date,
+  ) async {
     final rows = await Db.client
         .from('attendance')
         .select('student_id, status')
@@ -100,18 +113,32 @@ class AttendanceRepository {
     required String status,
     String? sessionId,
   }) async {
-    await Db.client.from('attendance').upsert(
-      {
-        'cohort_id': cohortId,
-        'student_id': studentId,
-        'session_date': _dateOnly(date),
-        'status': status,
-        'marked_by': Db.user?.id,
-        'session_id': ?sessionId,
-      },
-      onConflict: 'cohort_id,student_id,session_date',
-    );
+    await Db.client.from('attendance').upsert({
+      'cohort_id': cohortId,
+      'student_id': studentId,
+      'session_date': _dateOnly(date),
+      'status': status,
+      'marked_by': Db.user?.id,
+      'session_id': ?sessionId,
+    }, onConflict: 'cohort_id,student_id,session_date');
   }
 
   static String _dateOnly(DateTime d) => d.toIso8601String().split('T').first;
+
+  /// عدّاد كل حالة حضور لطالب معيّن عبر كل حصصه — لحساب نسبة الالتزام
+  /// بتفاصيله (شاشة الطلاب).
+  Future<Map<String, int>> fetchStudentAttendanceCounts(
+    String studentId,
+  ) async {
+    final rows = await Db.client
+        .from('attendance')
+        .select('status')
+        .eq('student_id', studentId);
+    final counts = <String, int>{};
+    for (final r in (rows as List).cast<Map<String, dynamic>>()) {
+      final status = r['status'] as String;
+      counts[status] = (counts[status] ?? 0) + 1;
+    }
+    return counts;
+  }
 }

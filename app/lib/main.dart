@@ -10,6 +10,8 @@ import 'core/supabase.dart';
 import 'features/attendance/attendance_screen.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_screen.dart';
+import 'features/billing/student_dues_screen.dart';
+import 'features/billing/trainer_payroll_screen.dart';
 import 'features/cohorts/cohorts_screen.dart';
 import 'features/dashboard/home_screen.dart';
 import 'features/messages/messages_screen.dart';
@@ -34,7 +36,8 @@ Future<void> main() async {
   try {
     await Db.init().timeout(const Duration(seconds: 15));
   } on TimeoutException {
-    bootError = 'استغرق الاتصال بالخادم وقتاً طويلاً. تحقّق من اتصالك بالإنترنت.';
+    bootError =
+        'استغرق الاتصال بالخادم وقتاً طويلاً. تحقّق من اتصالك بالإنترنت.';
   } catch (e) {
     bootError = 'تعذّر الاتصال بخادم الأكاديمية. حاول مجدداً بعد قليل.';
   }
@@ -115,17 +118,21 @@ class _BootError extends StatelessWidget {
               children: [
                 const Icon(Icons.cloud_off, size: 46, color: Color(0xFF6B7A9C)),
                 const SizedBox(height: NawahSpacing.s4),
-                const Text('تعذّر تشغيل اللوحة',
-                    style: TextStyle(
-                      fontFamily: NawahFonts.display,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 19,
-                      color: Colors.white,
-                    )),
+                const Text(
+                  'تعذّر تشغيل اللوحة',
+                  style: TextStyle(
+                    fontFamily: NawahFonts.display,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 19,
+                    color: Colors.white,
+                  ),
+                ),
                 const SizedBox(height: NawahSpacing.s2),
-                Text(message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFF93A2C2), height: 1.8)),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF93A2C2), height: 1.8),
+                ),
                 const SizedBox(height: NawahSpacing.s5),
                 FilledButton.icon(
                   // إعادة التحميل تعيد تشغيل main من جديد
@@ -180,21 +187,30 @@ class _NoAccess extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_outline, size: 46, color: NawahColors.textMuted),
+              const Icon(
+                Icons.lock_outline,
+                size: 46,
+                color: NawahColors.textMuted,
+              ),
               const SizedBox(height: NawahSpacing.s4),
-              const Text('لا تملك صلاحية الدخول للوحة',
-                  style: TextStyle(
-                    fontFamily: NawahFonts.display,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 19,
-                    color: NawahColors.ink,
-                  )),
+              const Text(
+                'لا تملك صلاحية الدخول للوحة',
+                style: TextStyle(
+                  fontFamily: NawahFonts.display,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 19,
+                  color: NawahColors.ink,
+                ),
+              ),
               const SizedBox(height: NawahSpacing.s2),
               Text(
                 'حسابك (${auth.profile?.roleLabel ?? 'غير معروف'}) لا يملك صلاحية '
                 'الإدارة. تواصل مع مدير الأكاديمية لترقية حسابك.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: NawahColors.textSoft, height: 1.8),
+                style: const TextStyle(
+                  color: NawahColors.textSoft,
+                  height: 1.8,
+                ),
               ),
               const SizedBox(height: NawahSpacing.s5),
               OutlinedButton.icon(
@@ -236,65 +252,100 @@ class _DashboardShellState extends State<DashboardShell> {
     final canManage = p?.canManage ?? false;
     final canMarkAttendance = canManage || (p?.isTrainer ?? false);
 
-    final items = <NavItem>[
-      if (canManage)
+    // مصدر حقيقة واحد لكل قسم: (يظهر أم لا، عنصر التنقّل، الشاشة نفسها) —
+    // بدل قائمتين متوازيتين (items/screens) يجب تكرار نفس شرط الظهور
+    // على كلٍّ منهما يدوياً، وقد ينسى أحدهما فيختلّ التطابق بينهما.
+    final sections = <(bool visible, NavItem item, Widget screen)>[
+      (
+        canManage,
         const NavItem(
           label: 'نظرة عامة',
           icon: Icons.dashboard_outlined,
           selectedIcon: Icons.dashboard,
         ),
-      if (canManage)
+        HomeScreen(
+          profile: widget.auth.profile,
+          counts: _counts,
+          onGoToMessages: () => setState(() => _index = 1),
+          onGoToDues: () => setState(() => _index = 6),
+        ),
+      ),
+      (
+        canManage,
         NavItem(
           label: 'الرسائل',
           icon: Icons.inbox_outlined,
           selectedIcon: Icons.inbox,
         ).withBadge(_counts['new'] ?? 0),
-      if (canManage)
+        MessagesScreen(onCountsChanged: _onCounts),
+      ),
+      (
+        canManage,
         const NavItem(
           label: 'الطلاب',
           icon: Icons.groups_outlined,
           selectedIcon: Icons.groups,
         ),
-      if (canManage)
+        const StudentsScreen(),
+      ),
+      (
+        canManage,
         const NavItem(
           label: 'البرامج',
           icon: Icons.school_outlined,
           selectedIcon: Icons.school,
         ),
-      if (canManage)
+        const ProgramsScreen(),
+      ),
+      (
+        canManage,
         const NavItem(
           label: 'المدرّبون',
           icon: Icons.badge_outlined,
           selectedIcon: Icons.badge,
         ),
-      if (canManage)
+        const TrainersScreen(),
+      ),
+      (
+        canManage,
         const NavItem(
           label: 'الأفواج',
           icon: Icons.groups_2_outlined,
           selectedIcon: Icons.groups_2,
         ),
-      if (canMarkAttendance)
+        const CohortsScreen(),
+      ),
+      (
+        canManage,
+        const NavItem(
+          label: 'المستحقات',
+          icon: Icons.receipt_long_outlined,
+          selectedIcon: Icons.receipt_long,
+        ),
+        const StudentDuesScreen(),
+      ),
+      (
+        canManage,
+        const NavItem(
+          label: 'مستحقات المدرّبين',
+          icon: Icons.payments_outlined,
+          selectedIcon: Icons.payments,
+        ),
+        const TrainerPayrollScreen(),
+      ),
+      (
+        canMarkAttendance,
         const NavItem(
           label: 'الحضور',
           icon: Icons.checklist_outlined,
           selectedIcon: Icons.checklist,
         ),
-    ];
+        const AttendanceScreen(),
+      ),
+    ].where((s) => s.$1).toList();
 
-    final screens = <Widget>[
-      if (canManage)
-        HomeScreen(
-          profile: widget.auth.profile,
-          counts: _counts,
-          onGoToMessages: () => setState(() => _index = 1),
-        ),
-      if (canManage) MessagesScreen(onCountsChanged: _onCounts),
-      if (canManage) const StudentsScreen(),
-      if (canManage) const ProgramsScreen(),
-      if (canManage) const TrainersScreen(),
-      if (canManage) const CohortsScreen(),
-      if (canMarkAttendance) const AttendanceScreen(),
-    ];
+    final items = sections.map((s) => s.$2).toList();
+    final screens = sections.map((s) => s.$3).toList();
 
     // فهرس آمن دائماً: صلاحية المستخدم (وبالتالي طول القوائم أعلاه) قد
     // تتغيّر بين بناء وآخر بلا إعادة تشغيل التطبيق.
