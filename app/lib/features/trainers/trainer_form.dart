@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/config.dart';
 import '../auth/profile.dart';
 import '../cohorts/cohort.dart';
 import 'trainer.dart';
@@ -15,12 +16,16 @@ class TrainerForm extends StatefulWidget {
     required this.onSubmit,
     this.availableAccounts = const [],
     this.responsibleCohorts = const [],
+    this.currentHourlyRate,
   });
 
   final Trainer? initial;
-  final Future<void> Function(Trainer trainer) onSubmit;
+  final Future<void> Function(Trainer trainer, double? hourlyRate) onSubmit;
   final List<Profile> availableAccounts;
   final List<Cohort> responsibleCohorts;
+
+  /// سعر الساعة الحالي — null يعني بلا سعر مضبوط بعد (أو بلا حساب دخول).
+  final double? currentHourlyRate;
 
   @override
   State<TrainerForm> createState() => _TrainerFormState();
@@ -31,6 +36,7 @@ class _TrainerFormState extends State<TrainerForm> {
   late final TextEditingController _fullName;
   late final TextEditingController _title;
   late final TextEditingController _bio;
+  late final TextEditingController _hourlyRate;
   String? _profileId;
   bool _isPublished = true;
   bool _busy = false;
@@ -42,13 +48,14 @@ class _TrainerFormState extends State<TrainerForm> {
     _fullName = TextEditingController(text: t?.fullName ?? '');
     _title = TextEditingController(text: t?.title ?? '');
     _bio = TextEditingController(text: t?.bio ?? '');
+    _hourlyRate = TextEditingController(text: widget.currentHourlyRate?.toString() ?? '');
     _profileId = t?.profileId;
     _isPublished = t?.isPublished ?? true;
   }
 
   @override
   void dispose() {
-    for (final c in [_fullName, _title, _bio]) {
+    for (final c in [_fullName, _title, _bio, _hourlyRate]) {
       c.dispose();
     }
     super.dispose();
@@ -58,15 +65,18 @@ class _TrainerFormState extends State<TrainerForm> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await widget.onSubmit(Trainer(
-        id: widget.initial?.id ?? '',
-        fullName: _fullName.text.trim(),
-        profileId: _profileId,
-        title: _title.text.trim(),
-        bio: _bio.text.trim(),
-        isPublished: _isPublished,
-        createdAt: widget.initial?.createdAt ?? DateTime.now(),
-      ));
+      await widget.onSubmit(
+        Trainer(
+          id: widget.initial?.id ?? '',
+          fullName: _fullName.text.trim(),
+          profileId: _profileId,
+          title: _title.text.trim(),
+          bio: _bio.text.trim(),
+          isPublished: _isPublished,
+          createdAt: widget.initial?.createdAt ?? DateTime.now(),
+        ),
+        _profileId == null ? null : double.tryParse(_hourlyRate.text.trim()),
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -158,6 +168,16 @@ class _TrainerFormState extends State<TrainerForm> {
                 ),
 
               if (_profileId != null) ...[
+                const SizedBox(height: NawahSpacing.s4),
+                TextFormField(
+                  controller: _hourlyRate,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'سعر الساعة (${AppConfig.currencySymbol})',
+                    helperText: 'تعديل السعر لا يغيّر مستحقات حصص سُجِّلت سابقاً — يُطبَّق على الحصص الجديدة فقط.',
+                    helperMaxLines: 2,
+                  ),
+                ),
                 const SizedBox(height: NawahSpacing.s4),
                 const Align(
                   alignment: AlignmentDirectional.centerStart,

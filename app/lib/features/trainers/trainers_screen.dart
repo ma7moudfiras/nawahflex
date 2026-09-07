@@ -42,16 +42,19 @@ class _TrainersScreenState extends State<TrainersScreen> {
 
   Future<void> _openForm({Trainer? existing}) async {
     final accounts = await _repo.fetchAvailableTrainerAccounts(excludingTrainerId: existing?.id);
-    final responsibleCohorts = existing?.profileId == null
-        ? const <Cohort>[]
-        : await _repo.fetchResponsibleCohorts(existing!.profileId!);
+    final hasAccount = existing?.profileId != null;
+    final responsibleCohorts = hasAccount ? await _repo.fetchResponsibleCohorts(existing!.profileId!) : const <Cohort>[];
+    final currentRate = hasAccount ? await _repo.fetchHourlyRate(existing!.profileId!) : null;
     if (!mounted) return;
 
-    Future<void> onSubmit(Trainer t) async {
+    Future<void> onSubmit(Trainer t, double? hourlyRate) async {
       if (existing == null) {
         await _repo.create(t);
       } else {
         await _repo.update(existing.id, t);
+      }
+      if (t.profileId != null && hourlyRate != null) {
+        await _repo.setHourlyRate(t.profileId!, hourlyRate);
       }
       await _load();
     }
@@ -61,6 +64,7 @@ class _TrainersScreenState extends State<TrainersScreen> {
       onSubmit: onSubmit,
       availableAccounts: accounts,
       responsibleCohorts: responsibleCohorts,
+      currentHourlyRate: currentRate,
     );
 
     if (context.isWide) {

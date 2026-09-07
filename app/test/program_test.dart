@@ -50,4 +50,31 @@ void main() {
       expect(m['text'], 'وصف');
     });
   });
+
+  group('السعر وخصم الإخوة', () {
+    test('fromMap يقرأ price و sibling_price', () {
+      final program = Program.fromMap({
+        'id': 'p1', 'title': 'x', 'text': 'y',
+        'created_at': DateTime(2026).toIso8601String(),
+        'price': 120, 'sibling_price': 100,
+      });
+      expect(program.price, 120);
+      expect(program.siblingPrice, 100);
+    });
+
+    test('بلا price بالخريطة يرجع صفراً افتراضياً', () {
+      final program = Program.fromMap({
+        'id': 'p1', 'title': 'x', 'text': 'y',
+        'created_at': DateTime(2026).toIso8601String(),
+      });
+      expect(program.price, 0);
+      expect(program.siblingPrice, isNull);
+    });
+
+    test('toInsertMap يحذف sibling_price فقط إن كان null', () {
+      final m = p().toInsertMap();
+      expect(m['price'], 0);
+      expect(m.containsKey('sibling_price'), isFalse);
+    });
+  });
 }

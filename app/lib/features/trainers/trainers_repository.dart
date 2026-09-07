@@ -51,6 +51,28 @@ class TrainersRepository {
         .toList();
   }
 
+  /// سعر ساعة المدرّب الحالي — خاص تماماً (جدول trainer_pay_rates، ليس
+  /// public.trainers) حتى لا يظهر بالموقع أبداً. يُقرأ فقط عند وجود حساب
+  /// دخول مرتبط، فالسعر بلا حساب لا معنى له (لا حصص تُسجَّل بلا حساب).
+  Future<double?> fetchHourlyRate(String profileId) async {
+    final row = await Db.client
+        .from('trainer_pay_rates')
+        .select('hourly_rate')
+        .eq('profile_id', profileId)
+        .maybeSingle();
+    return row == null ? null : (row['hourly_rate'] as num).toDouble();
+  }
+
+  /// يحدّث سعر الساعة الحالي — لا يمسّ أي حصة سُجِّلت سابقاً، لأن كل حصة
+  /// تحمل لقطتها الخاصة من السعر وقت تسجيلها (class_sessions.trainer_hourly_rate).
+  Future<void> setHourlyRate(String profileId, double rate) async {
+    await Db.client.from('trainer_pay_rates').upsert({
+      'profile_id': profileId,
+      'hourly_rate': rate,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+
   /// الأفواج التي يتولاها هذا الحساب حالياً — عرض فقط؛ التعيين نفسه يبقى
   /// من شاشة الأفواج (مصدر حقيقة واحد لـ cohorts.trainer_id).
   Future<List<Cohort>> fetchResponsibleCohorts(String profileId) async {
