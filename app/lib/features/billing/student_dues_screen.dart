@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import '../../shared/money.dart';
+import '../../shared/audit.dart';
+import '../../shared/months.dart';
 import 'billing_repository.dart';
 import 'student_due.dart';
 
@@ -55,22 +57,7 @@ class _StudentDuesScreenState extends State<StudentDuesScreen> {
     _load();
   }
 
-  static const _monthNames = [
-    'كانون الثاني',
-    'شباط',
-    'آذار',
-    'نيسان',
-    'أيار',
-    'حزيران',
-    'تموز',
-    'آب',
-    'أيلول',
-    'تشرين الأول',
-    'تشرين الثاني',
-    'كانون الأول',
-  ];
-
-  String get _monthLabel => '${_monthNames[_month.month - 1]} ${_month.year}';
+  String get _monthLabel => arabicMonthLabel(_month);
 
   Future<void> _openDetail(StudentDueOverview item) async {
     await showDialog(
@@ -262,6 +249,8 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
   late StudentDueOverview _item;
   late bool _siblingDiscount;
   List<StudentPayment> _payments = [];
+  ({bool enabled, DateTime changedAt, String? changedByName})?
+  _lastDiscountChange;
   bool _busy = false;
   final _amount = TextEditingController();
   final _note = TextEditingController();
@@ -272,6 +261,12 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
     _item = widget.item;
     _siblingDiscount = widget.item.siblingDiscount;
     if (_item.hasDue) _loadPayments();
+    _loadLastDiscountChange();
+  }
+
+  Future<void> _loadLastDiscountChange() async {
+    final change = await widget.repo.fetchLastDiscountChange(_item.studentId);
+    if (mounted) setState(() => _lastDiscountChange = change);
   }
 
   @override
@@ -313,6 +308,7 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
     try {
       await widget.repo.setSiblingDiscount(_item.studentId, enabled);
       if (mounted) setState(() => _siblingDiscount = enabled);
+      await _loadLastDiscountChange();
       widget.onChanged();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -373,6 +369,20 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
               value: _siblingDiscount,
               onChanged: _busy ? null : _toggleSibling,
             ),
+            if (_lastDiscountChange != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  auditLine(
+                    _lastDiscountChange!.changedByName,
+                    _lastDiscountChange!.changedAt,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: NawahColors.textMuted,
+                  ),
+                ),
+              ),
 
             const Divider(height: NawahSpacing.s5),
 
@@ -416,7 +426,7 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
                   (p) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      '${formatMoney(p.amount)} — ${p.paidAt.year}/${p.paidAt.month}/${p.paidAt.day}'
+                      '${formatMoney(p.amount)} — ${auditLine(p.recordedByName, p.paidAt)}'
                       '${p.note != null && p.note!.isNotEmpty ? ' (${p.note})' : ''}',
                       style: const TextStyle(
                         fontSize: 12,

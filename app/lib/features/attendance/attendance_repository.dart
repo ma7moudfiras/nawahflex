@@ -50,9 +50,11 @@ class AttendanceRepository {
       final trainerId = cohort?['trainer_id'] as String?;
       if (trainerId != null) {
         final rateRow = await Db.client
-            .from('trainer_pay_rates')
+            .from('trainer_rate_history')
             .select('hourly_rate')
             .eq('profile_id', trainerId)
+            .order('changed_at', ascending: false)
+            .limit(1)
             .maybeSingle();
         if (rateRow != null) rate = (rateRow['hourly_rate'] as num).toDouble();
       }
@@ -72,6 +74,20 @@ class AttendanceRepository {
         .select('id')
         .single();
     return row['id'] as String;
+  }
+
+  /// اللقاءات الماضية لفوج معيّن، الأحدث أولاً — لقائمة السجلّ.
+  Future<List<ClassSession>> fetchPastSessions(String cohortId) async {
+    final rows = await Db.client
+        .from('class_sessions')
+        .select(
+          'id, cohort_id, session_date, starts_at, ends_at, notes, trainer_hourly_rate',
+        )
+        .eq('cohort_id', cohortId)
+        .order('session_date', ascending: false);
+    return (rows as List)
+        .map((r) => ClassSession.fromMap(r as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<RosterEntry>> fetchRoster(String cohortId) async {

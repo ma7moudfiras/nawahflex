@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import '../../shared/money.dart';
+import '../../shared/audit.dart';
+import '../../shared/months.dart';
 import 'trainer_payroll.dart';
 import 'trainer_payroll_repository.dart';
 
@@ -55,22 +57,7 @@ class _TrainerPayrollScreenState extends State<TrainerPayrollScreen> {
     _load();
   }
 
-  static const _monthNames = [
-    'كانون الثاني',
-    'شباط',
-    'آذار',
-    'نيسان',
-    'أيار',
-    'حزيران',
-    'تموز',
-    'آب',
-    'أيلول',
-    'تشرين الأول',
-    'تشرين الثاني',
-    'كانون الأول',
-  ];
-
-  String get _monthLabel => '${_monthNames[_month.month - 1]} ${_month.year}';
+  String get _monthLabel => arabicMonthLabel(_month);
 
   Future<void> _togglePaid(TrainerPayroll item) async {
     await _repo.setPayoutStatus(item.trainerId, _month, !item.isPaid);
@@ -181,6 +168,20 @@ class _PayrollRow extends StatelessWidget {
                     color: NawahColors.textMuted,
                   ),
                 ),
+                if (item.statusChangedAt != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      auditLine(
+                        item.statusChangedByName,
+                        item.statusChangedAt!,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: NawahColors.textMuted,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

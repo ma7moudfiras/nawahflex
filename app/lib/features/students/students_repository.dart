@@ -7,7 +7,7 @@ class StudentsRepository {
 
   static const _cols = 'id, full_name, birth_date, gender, guardian_name, '
       'guardian_phone, guardian_email, notes, photo_url, is_active, created_at, '
-      'student_programs(program_id, programs(id, title))';
+      'billing_start_month, student_programs(program_id, programs(id, title))';
 
   Future<List<Student>> fetch({String query = '', bool activeOnly = false}) async {
     var q = Db.client.from('students').select(_cols);

@@ -336,11 +336,11 @@ class _DashboardShellState extends State<DashboardShell> {
       (
         canMarkAttendance,
         const NavItem(
-          label: 'الحضور',
+          label: 'اللقاءات',
           icon: Icons.checklist_outlined,
           selectedIcon: Icons.checklist,
         ),
-        const AttendanceScreen(),
+        AttendanceScreen(isAdmin: canManage),
       ),
     ].where((s) => s.$1).toList();
 

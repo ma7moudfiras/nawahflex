@@ -9,11 +9,17 @@ import 'trainer.dart';
 class TrainersRepository {
   const TrainersRepository();
 
-  static const _cols = 'id, profile_id, full_name, title, bio, is_published, created_at';
+  static const _cols =
+      'id, profile_id, full_name, title, bio, is_published, created_at';
 
   Future<List<Trainer>> fetch() async {
-    final rows = await Db.client.from('trainers').select(_cols).order('full_name');
-    return (rows as List).map((r) => Trainer.fromMap(r as Map<String, dynamic>)).toList();
+    final rows = await Db.client
+        .from('trainers')
+        .select(_cols)
+        .order('full_name');
+    return (rows as List)
+        .map((r) => Trainer.fromMap(r as Map<String, dynamic>))
+        .toList();
   }
 
   Future<int> count() async {
@@ -22,7 +28,11 @@ class TrainersRepository {
   }
 
   Future<String> create(Trainer t) async {
-    final row = await Db.client.from('trainers').insert(t.toInsertMap()).select('id').single();
+    final row = await Db.client
+        .from('trainers')
+        .insert(t.toInsertMap())
+        .select('id')
+        .single();
     return row['id'] as String;
   }
 
@@ -33,12 +43,18 @@ class TrainersRepository {
   /// حسابات دخول بصلاحية مدرّب متاحة للربط بسيرة — تستثني الحسابات
   /// المربوطة بسيرة أخرى مسبقاً، لكن تُبقي حساب السيرة الحالية نفسها
   /// (عند التعديل) ضمن الخيارات حتى تظهر مُحدَّدة.
-  Future<List<Profile>> fetchAvailableTrainerAccounts({String? excludingTrainerId}) async {
-    final profiles =
-        await Db.client.from('profiles').select('id, full_name, role').eq('role', 'trainer').order('full_name');
+  Future<List<Profile>> fetchAvailableTrainerAccounts({
+    String? excludingTrainerId,
+  }) async {
+    final profiles = await Db.client
+        .from('profiles')
+        .select('id, full_name, role')
+        .eq('role', 'trainer')
+        .order('full_name');
     var linkedQuery = Db.client.from('trainers').select('profile_id');
-    final linkedRows =
-        excludingTrainerId == null ? await linkedQuery : await linkedQuery.neq('id', excludingTrainerId);
+    final linkedRows = excludingTrainerId == null
+        ? await linkedQuery
+        : await linkedQuery.neq('id', excludingTrainerId);
     final linkedIds = (linkedRows as List)
         .cast<Map<String, dynamic>>()
         .map((r) => r['profile_id'] as String?)
@@ -51,25 +67,45 @@ class TrainersRepository {
         .toList();
   }
 
-  /// سعر ساعة المدرّب الحالي — خاص تماماً (جدول trainer_pay_rates، ليس
+  /// سعر ساعة المدرّب الحالي — خاص تماماً (جدول trainer_rate_history، ليس
   /// public.trainers) حتى لا يظهر بالموقع أبداً. يُقرأ فقط عند وجود حساب
   /// دخول مرتبط، فالسعر بلا حساب لا معنى له (لا حصص تُسجَّل بلا حساب).
+  /// السعر الحالي = أحدث حدث بالسجلّ، لا صفّ مستقلّ.
   Future<double?> fetchHourlyRate(String profileId) async {
     final row = await Db.client
-        .from('trainer_pay_rates')
+        .from('trainer_rate_history')
         .select('hourly_rate')
         .eq('profile_id', profileId)
+        .order('changed_at', ascending: false)
+        .limit(1)
         .maybeSingle();
     return row == null ? null : (row['hourly_rate'] as num).toDouble();
   }
 
-  /// يحدّث سعر الساعة الحالي — لا يمسّ أي حصة سُجِّلت سابقاً، لأن كل حصة
-  /// تحمل لقطتها الخاصة من السعر وقت تسجيلها (class_sessions.trainer_hourly_rate).
-  Future<void> setHourlyRate(String profileId, double rate) async {
-    await Db.client.from('trainer_pay_rates').upsert({
+  /// سجلّ تعديلات سعر الساعة كاملاً — من ومتى ولماذا، الأحدث أولاً.
+  Future<List<TrainerRateChange>> fetchRateHistory(String profileId) async {
+    final rows = await Db.client
+        .from('trainer_rate_history')
+        .select('hourly_rate, reason, changed_at, profiles(full_name)')
+        .eq('profile_id', profileId)
+        .order('changed_at', ascending: false);
+    return (rows as List)
+        .map((r) => TrainerRateChange.fromMap(r as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// يسجّل تعديل سعر جديد (لا يستبدل القديم) — لا يمسّ أي حصة سُجِّلت
+  /// سابقاً، لأن كل حصة تحمل لقطتها الخاصة من السعر وقت تسجيلها.
+  Future<void> setHourlyRate(
+    String profileId,
+    double rate, {
+    String? reason,
+  }) async {
+    await Db.client.from('trainer_rate_history').insert({
       'profile_id': profileId,
       'hourly_rate': rate,
-      'updated_at': DateTime.now().toIso8601String(),
+      'reason': reason,
+      'changed_by': Db.user?.id,
     });
   }
 
@@ -78,9 +114,13 @@ class TrainersRepository {
   Future<List<Cohort>> fetchResponsibleCohorts(String profileId) async {
     final rows = await Db.client
         .from('cohorts')
-        .select('id, name, program_id, trainer_id, schedule_label, starts_at, ends_at, capacity, is_active, created_at')
+        .select(
+          'id, name, program_id, trainer_id, schedule_label, starts_at, ends_at, capacity, is_active, created_at',
+        )
         .eq('trainer_id', profileId)
         .order('name');
-    return (rows as List).map((r) => Cohort.fromMap(r as Map<String, dynamic>)).toList();
+    return (rows as List)
+        .map((r) => Cohort.fromMap(r as Map<String, dynamic>))
+        .toList();
   }
 }

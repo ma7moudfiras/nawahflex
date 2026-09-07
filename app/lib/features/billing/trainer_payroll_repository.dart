@@ -25,14 +25,16 @@ class TrainerPayrollRepository {
           ? t['full_name'] as String
           : 'مدرّب';
       final totals = await _computeMonth(id, month);
-      final isPaid = await fetchPayoutStatus(id, month);
+      final lastEvent = await _fetchLastPayoutEvent(id, month);
       list.add(
         TrainerPayroll(
           trainerId: id,
           fullName: name,
           hours: totals.$1,
           amount: totals.$2,
-          isPaid: isPaid,
+          isPaid: lastEvent?.isPaid ?? false,
+          statusChangedAt: lastEvent?.changedAt,
+          statusChangedByName: lastEvent?.changedByName,
         ),
       );
     }
@@ -79,16 +81,25 @@ class TrainerPayrollRepository {
     return (totalHours, totalAmount);
   }
 
-  Future<bool> fetchPayoutStatus(String trainerId, DateTime month) async {
+  /// آخر حدث تسديد مسجَّل لهذا المدرّب بهذا الشهر — من ومتى ولأي حالة،
+  /// الأحدث فقط (السجلّ الكامل يبقى مخزَّناً بلا استبدال).
+  Future<({bool isPaid, DateTime changedAt, String? changedByName})?>
+  _fetchLastPayoutEvent(String trainerId, DateTime month) async {
     final row = await Db.client
         .from('trainer_payout_events')
-        .select('is_paid')
+        .select('is_paid, changed_at, profiles(full_name)')
         .eq('trainer_id', trainerId)
         .eq('period_month', _dateOnly(_firstOfMonth(month)))
         .order('changed_at', ascending: false)
         .limit(1)
         .maybeSingle();
-    return (row?['is_paid'] as bool?) ?? false;
+    if (row == null) return null;
+    return (
+      isPaid: row['is_paid'] as bool,
+      changedAt: DateTime.parse(row['changed_at'] as String).toLocal(),
+      changedByName:
+          (row['profiles'] as Map<String, dynamic>?)?['full_name'] as String?,
+    );
   }
 
   Future<void> setPayoutStatus(

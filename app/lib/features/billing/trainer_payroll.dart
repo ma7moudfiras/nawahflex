@@ -8,6 +8,8 @@ class TrainerPayroll {
     required this.hours,
     required this.amount,
     required this.isPaid,
+    this.statusChangedAt,
+    this.statusChangedByName,
   });
 
   final String trainerId;
@@ -15,4 +17,8 @@ class TrainerPayroll {
   final double hours;
   final double amount;
   final bool isPaid;
+
+  /// من ومتى غيّر حالة التسديد آخر مرّة — null إن لم يُسجَّل أي حدث بعد.
+  final DateTime? statusChangedAt;
+  final String? statusChangedByName;
 }

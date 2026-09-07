@@ -37,6 +37,7 @@ class StudentPayment {
     required this.amount,
     required this.paidAt,
     this.note,
+    this.recordedByName,
   });
 
   final String id;
@@ -45,12 +46,16 @@ class StudentPayment {
   final DateTime paidAt;
   final String? note;
 
+  /// اسم من سجَّل الدفعة — إجابة سؤال "مين ضغط تسديد ومتى".
+  final String? recordedByName;
+
   factory StudentPayment.fromMap(Map<String, dynamic> m) => StudentPayment(
     id: m['id'] as String,
     dueId: m['due_id'] as String,
     amount: (m['amount'] as num).toDouble(),
     paidAt: DateTime.parse(m['paid_at'] as String).toLocal(),
     note: m['note'] as String?,
+    recordedByName: (m['profiles'] as Map<String, dynamic>?)?['full_name'] as String?,
   );
 }
 
