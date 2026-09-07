@@ -181,20 +181,28 @@
 
   /* ======================================================================
      4. الإحصائيات بعدّاد متحرك
+     ----------------------------------------------------------------------
+     تُرسم فوراً من content.js (بلا انتظار شبكة — أول رسم يبقى سريعاً)،
+     ثم تُستبدل بصمت بأرقام القاعدة الحيّة إن وصلت. فشل الشبكة أو مهلتها
+     يُبقي أرقام content.js كما هي — لا شاشة فارغة ولا خطأ للزائر.
      ====================================================================== */
-  function buildStats() {
-    $("#statsGrid").innerHTML = S.stats.map((s) => `
+  let statsObserver = null;
+
+  function renderStats(list) {
+    $("#statsGrid").innerHTML = list.map((s) => `
       <div class="stat">
         <div class="stat__icon">${esc(s.icon)}</div>
         <div class="stat__num" data-to="${Number(s.value)}"><span>0</span><i>${esc(s.suffix)}</i></div>
         <div class="stat__label">${esc(s.label)}</div>
       </div>`).join("");
 
+    if (statsObserver) statsObserver.disconnect();
+
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const io = new IntersectionObserver((entries) => {
+    statsObserver = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
         if (!en.isIntersecting) return;
-        io.unobserve(en.target);
+        statsObserver.unobserve(en.target);
         const target = Number(en.target.dataset.to);
         const out = $("span", en.target);
         if (reduce) { out.textContent = target.toLocaleString("en-US"); return; }
@@ -208,7 +216,16 @@
         })(t0);
       });
     }, { threshold: .5 });
-    $$(".stat__num").forEach((n) => io.observe(n));
+    $$(".stat__num").forEach((n) => statsObserver.observe(n));
+  }
+
+  function buildStats() {
+    renderStats(S.stats);
+
+    if (!window.API || !API.isReady()) return;
+    API.stats().then((rows) => {
+      if (Array.isArray(rows) && rows.length) renderStats(rows);
+    }).catch(() => { /* تبقى أرقام content.js — لا حاجة لإظهار خطأ هنا */ });
   }
 
   /* ======================================================================
