@@ -333,10 +333,8 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
         amount: amount,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
-      _amount.clear();
-      _note.clear();
-      await _loadPayments();
       widget.onChanged();
+      if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
     }

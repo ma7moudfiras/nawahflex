@@ -10,6 +10,13 @@ class RosterEntry {
   final String fullName;
 }
 
+/// مدرّب مساعد بلقاء معيّن — اسمه وسعر ساعته الملتقَط وقت إضافته.
+class SessionCoTrainer {
+  const SessionCoTrainer({required this.trainerId, required this.fullName});
+  final String trainerId;
+  final String fullName;
+}
+
 /// تسجيل الحضور. RLS تُقيّد الفوج ذاته (fetch على cohorts، لا هنا) —
 /// وتمنع المدرّب من تسجيل حضور لطالب غير مسجَّل بفوجه فعلياً (WITH CHECK
 /// في 0004_cohorts_enrollments_attendance.sql).
@@ -137,6 +144,87 @@ class AttendanceRepository {
       'marked_by': Db.user?.id,
       'session_id': ?sessionId,
     }, onConflict: 'cohort_id,student_id,session_date');
+  }
+
+  /// المدرّبون المساعدون بلقاء معيّن — لعرضهم وتعديلهم بنموذج اللقاء.
+  Future<List<SessionCoTrainer>> fetchCoTrainers(String sessionId) async {
+    final rows = await Db.client
+        .from('class_session_trainers')
+        .select('trainer_id, profiles(full_name)')
+        .eq('session_id', sessionId);
+    return (rows as List).map((r) {
+      final m = r as Map<String, dynamic>;
+      final profile = m['profiles'] as Map<String, dynamic>?;
+      return SessionCoTrainer(
+        trainerId: m['trainer_id'] as String,
+        fullName: (profile?['full_name'] as String?) ?? '',
+      );
+    }).toList();
+  }
+
+  /// يستبدل قائمة المدرّبين المساعدين كاملة — حذف من لم يعد مختاراً، وإضافة
+  /// الجدد فقط (سعر كل جديد يُلتقَط تلقائياً بمُشغِّل قاعدة البيانات، لأن
+  /// من يسجّل اللقاء لا يملك أصلاً صلاحية قراءة سعر مدرّب آخر مباشرة).
+  /// من يبقى مختاراً لا يُعاد إدراجه — سعره الملتقَط سابقاً لا يتغيّر.
+  Future<void> setCoTrainers(String sessionId, List<String> trainerIds) async {
+    final existing = (await fetchCoTrainers(sessionId))
+        .map((t) => t.trainerId)
+        .toList();
+    final toRemove = existing.where((id) => !trainerIds.contains(id)).toList();
+    final toAdd = trainerIds.where((id) => !existing.contains(id)).toList();
+    if (toRemove.isNotEmpty) {
+      await Db.client
+          .from('class_session_trainers')
+          .delete()
+          .eq('session_id', sessionId)
+          .inFilter('trainer_id', toRemove);
+    }
+    if (toAdd.isNotEmpty) {
+      await Db.client
+          .from('class_session_trainers')
+          .insert(
+            toAdd
+                .map((id) => {'session_id': sessionId, 'trainer_id': id})
+                .toList(),
+          );
+    }
+  }
+
+  /// طلاب مؤهَّلون للإضافة لهذا الفوج (نقل من فوج آخر) — أي طالب نشط
+  /// ظاهر أصلاً لهذا المستخدم (RLS تحصر الظهور: الإدارة كل الطلاب، المدرّب
+  /// طلاب أفواجه فقط) وغير مسجَّل بهذا الفوج تحديداً.
+  Future<List<RosterEntry>> fetchAddableStudents(String cohortId) async {
+    final enrolled = await Db.client
+        .from('enrollments')
+        .select('student_id')
+        .eq('cohort_id', cohortId);
+    final enrolledIds = (enrolled as List)
+        .map((r) => (r as Map<String, dynamic>)['student_id'] as String)
+        .toSet();
+    final rows = await Db.client
+        .from('students')
+        .select('id, full_name')
+        .eq('is_active', true)
+        .order('full_name');
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .where((r) => !enrolledIds.contains(r['id']))
+        .map(
+          (r) => RosterEntry(
+            studentId: r['id'] as String,
+            fullName: (r['full_name'] as String?) ?? '',
+          ),
+        )
+        .toList();
+  }
+
+  /// يضيف طالباً موجوداً أصلاً لفوج آخر إلى هذا الفوج — RLS تمنع المدرّب من
+  /// جلب طالب لا علاقة له به إطلاقاً (0009_multi_trainer_sessions.sql).
+  Future<void> addStudentToCohort(String cohortId, String studentId) async {
+    await Db.client.from('enrollments').insert({
+      'cohort_id': cohortId,
+      'student_id': studentId,
+    });
   }
 
   static String _dateOnly(DateTime d) => d.toIso8601String().split('T').first;

@@ -333,11 +333,11 @@ class _StudentFormState extends State<StudentForm> {
                         selected: enrolled,
                         onSelected: (_) => _toggleMonth(month),
                         selectedColor: NawahColors.primarySoft,
-                        backgroundColor: hasOverride
-                            ? NawahColors.accentSoft
-                            : null,
                         side: hasOverride
-                            ? const BorderSide(color: NawahColors.accent)
+                            ? const BorderSide(
+                                color: NawahColors.accent,
+                                width: 1.5,
+                              )
                             : null,
                       );
                     }),

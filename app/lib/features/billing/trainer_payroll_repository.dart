@@ -41,10 +41,31 @@ class TrainerPayrollRepository {
     return list;
   }
 
+  /// المستحقات = ساعات كمدرّب أساسي لأفواجه + ساعات كمدرّب مساعد بلقاءات
+  /// أفواج أخرى (كلٌّ بسعره الملتقَط وقت تلك الحصة تحديداً، لا سعره الحالي).
   Future<(double, double)> _computeMonth(
     String trainerId,
     DateTime month,
   ) async {
+    final start = _firstOfMonth(month);
+    final end = _firstOfNextMonth(month);
+    var totalHours = 0.0;
+    var totalAmount = 0.0;
+
+    void accumulate(Map<String, dynamic> sessionMap, double? rate) {
+      final parsed = ClassSession.fromMap({
+        ...sessionMap,
+        'id': '',
+        'cohort_id': '',
+        'trainer_hourly_rate': rate,
+      });
+      final h = parsed.hours;
+      if (h == null) return;
+      totalHours += h;
+      final r = parsed.trainerHourlyRate;
+      if (r != null) totalAmount += h * r;
+    }
+
     final cohortRows = await Db.client
         .from('cohorts')
         .select('id')
@@ -52,32 +73,31 @@ class TrainerPayrollRepository {
     final cohortIds = (cohortRows as List)
         .map((r) => (r as Map<String, dynamic>)['id'] as String)
         .toList();
-    if (cohortIds.isEmpty) return (0.0, 0.0);
-
-    final start = _firstOfMonth(month);
-    final end = _firstOfNextMonth(month);
-    final sessions = await Db.client
-        .from('class_sessions')
-        .select('starts_at, ends_at, trainer_hourly_rate')
-        .inFilter('cohort_id', cohortIds)
-        .gte('session_date', _dateOnly(start))
-        .lt('session_date', _dateOnly(end));
-
-    var totalHours = 0.0;
-    var totalAmount = 0.0;
-    for (final s in (sessions as List).cast<Map<String, dynamic>>()) {
-      final parsed = ClassSession.fromMap({
-        ...s,
-        'id': '',
-        'cohort_id': '',
-        'session_date': _dateOnly(start),
-      });
-      final h = parsed.hours;
-      if (h == null) continue;
-      totalHours += h;
-      final rate = parsed.trainerHourlyRate;
-      if (rate != null) totalAmount += h * rate;
+    if (cohortIds.isNotEmpty) {
+      final sessions = await Db.client
+          .from('class_sessions')
+          .select('starts_at, ends_at, session_date, trainer_hourly_rate')
+          .inFilter('cohort_id', cohortIds)
+          .gte('session_date', _dateOnly(start))
+          .lt('session_date', _dateOnly(end));
+      for (final s in (sessions as List).cast<Map<String, dynamic>>()) {
+        accumulate(s, (s['trainer_hourly_rate'] as num?)?.toDouble());
+      }
     }
+
+    final coRows = await Db.client
+        .from('class_session_trainers')
+        .select(
+          'hourly_rate, class_sessions!inner(starts_at, ends_at, session_date)',
+        )
+        .eq('trainer_id', trainerId)
+        .gte('class_sessions.session_date', _dateOnly(start))
+        .lt('class_sessions.session_date', _dateOnly(end));
+    for (final r in (coRows as List).cast<Map<String, dynamic>>()) {
+      final cs = r['class_sessions'] as Map<String, dynamic>;
+      accumulate(cs, (r['hourly_rate'] as num?)?.toDouble());
+    }
+
     return (totalHours, totalAmount);
   }
 
@@ -87,7 +107,9 @@ class TrainerPayrollRepository {
   _fetchLastPayoutEvent(String trainerId, DateTime month) async {
     final row = await Db.client
         .from('trainer_payout_events')
-        .select('is_paid, changed_at, profiles(full_name)')
+        .select(
+          'is_paid, changed_at, profiles!trainer_payout_events_changed_by_fkey(full_name)',
+        )
         .eq('trainer_id', trainerId)
         .eq('period_month', _dateOnly(_firstOfMonth(month)))
         .order('changed_at', ascending: false)

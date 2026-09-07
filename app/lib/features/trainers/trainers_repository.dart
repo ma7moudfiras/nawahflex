@@ -86,7 +86,9 @@ class TrainersRepository {
   Future<List<TrainerRateChange>> fetchRateHistory(String profileId) async {
     final rows = await Db.client
         .from('trainer_rate_history')
-        .select('hourly_rate, reason, changed_at, profiles(full_name)')
+        .select(
+          'hourly_rate, reason, changed_at, profiles!trainer_rate_history_changed_by_fkey(full_name)',
+        )
         .eq('profile_id', profileId)
         .order('changed_at', ascending: false);
     return (rows as List)
