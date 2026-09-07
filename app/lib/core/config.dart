@@ -15,4 +15,8 @@ class AppConfig {
   /// يخدم الاثنين بنفس الكود ويبدّل الهيكل عند هذه الحدود.
   static const double breakpointTablet = 720;
   static const double breakpointDesktop = 1100;
+
+  /// رمز العملة — ثابت واحد بدل تكراره حرفياً بكل شاشة مالية، حتى ينسخ
+  /// المشروع لأكاديمية أخرى بعملة مختلفة بتعديل سطر واحد لا بحث واستبدال.
+  static const currencySymbol = '₪';
 }

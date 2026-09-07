@@ -13,12 +13,13 @@ class Student {
     this.notes,
     this.photoUrl,
     this.programTitles = const [],
+    this.billingStartMonth,
   });
 
   final String id;
   final String fullName;
   final DateTime? birthDate;
-  final String? gender;             // 'm' | 'f' | null
+  final String? gender; // 'm' | 'f' | null
   final String? guardianName;
   final String? guardianPhone;
   final String? guardianEmail;
@@ -27,6 +28,10 @@ class Student {
   final bool isActive;
   final DateTime createdAt;
   final List<String> programTitles;
+
+  /// أول شهر يُحتسب للطالب مستحقات من أجله — يمنع ظهوره "غير مسدَّد"
+  /// لأشهر سابقة لالتحاقه فعلياً بالأكاديمية.
+  final DateTime? billingStartMonth;
 
   String get initial => fullName.trim().isEmpty ? '؟' : fullName.trim()[0];
 
@@ -50,32 +55,49 @@ class Student {
   }
 
   factory Student.fromMap(Map<String, dynamic> m) => Student(
-        id: m['id'] as String,
-        fullName: (m['full_name'] as String?) ?? '',
-        birthDate: m['birth_date'] == null ? null : DateTime.parse(m['birth_date'] as String),
-        gender: m['gender'] as String?,
-        guardianName: m['guardian_name'] as String?,
-        guardianPhone: m['guardian_phone'] as String?,
-        guardianEmail: m['guardian_email'] as String?,
-        notes: m['notes'] as String?,
-        photoUrl: m['photo_url'] as String?,
-        isActive: (m['is_active'] as bool?) ?? true,
-        createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
-        programTitles: ((m['student_programs'] as List?) ?? const [])
-            .map((sp) => (sp as Map<String, dynamic>)['programs'] as Map<String, dynamic>?)
-            .whereType<Map<String, dynamic>>()
-            .map((p) => p['title'] as String)
-            .toList(),
-      );
+    id: m['id'] as String,
+    fullName: (m['full_name'] as String?) ?? '',
+    birthDate: m['birth_date'] == null
+        ? null
+        : DateTime.parse(m['birth_date'] as String),
+    gender: m['gender'] as String?,
+    guardianName: m['guardian_name'] as String?,
+    guardianPhone: m['guardian_phone'] as String?,
+    guardianEmail: m['guardian_email'] as String?,
+    notes: m['notes'] as String?,
+    photoUrl: m['photo_url'] as String?,
+    isActive: (m['is_active'] as bool?) ?? true,
+    createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+    billingStartMonth: m['billing_start_month'] == null
+        ? null
+        : DateTime.parse(m['billing_start_month'] as String),
+    programTitles: ((m['student_programs'] as List?) ?? const [])
+        .map(
+          (sp) =>
+              (sp as Map<String, dynamic>)['programs'] as Map<String, dynamic>?,
+        )
+        .whereType<Map<String, dynamic>>()
+        .map((p) => p['title'] as String)
+        .toList(),
+  );
 
   Map<String, dynamic> toInsertMap() => {
-        'full_name': fullName,
-        if (birthDate != null) 'birth_date': birthDate!.toIso8601String().split('T').first,
-        if (gender != null) 'gender': gender,
-        if (guardianName != null && guardianName!.isNotEmpty) 'guardian_name': guardianName,
-        if (guardianPhone != null && guardianPhone!.isNotEmpty) 'guardian_phone': guardianPhone,
-        if (guardianEmail != null && guardianEmail!.isNotEmpty) 'guardian_email': guardianEmail,
-        if (notes != null && notes!.isNotEmpty) 'notes': notes,
-        'is_active': isActive,
-      };
+    'full_name': fullName,
+    if (birthDate != null)
+      'birth_date': birthDate!.toIso8601String().split('T').first,
+    if (gender != null) 'gender': gender,
+    if (guardianName != null && guardianName!.isNotEmpty)
+      'guardian_name': guardianName,
+    if (guardianPhone != null && guardianPhone!.isNotEmpty)
+      'guardian_phone': guardianPhone,
+    if (guardianEmail != null && guardianEmail!.isNotEmpty)
+      'guardian_email': guardianEmail,
+    if (notes != null && notes!.isNotEmpty) 'notes': notes,
+    'is_active': isActive,
+    if (billingStartMonth != null)
+      'billing_start_month': DateTime(
+        billingStartMonth!.year,
+        billingStartMonth!.month,
+      ).toIso8601String().split('T').first,
+  };
 }

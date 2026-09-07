@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
+import '../../shared/money.dart';
 import 'program.dart';
 import 'program_form.dart';
 import 'programs_repository.dart';
@@ -152,16 +153,30 @@ class _ProgramCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: NawahColors.textSoft, fontSize: 13, height: 1.6)),
               ),
-              if (program.ageRangeLabel.isNotEmpty)
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Container(
+              Wrap(
+                spacing: NawahSpacing.s2,
+                runSpacing: NawahSpacing.s2,
+                children: [
+                  if (program.ageRangeLabel.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: NawahSpacing.s2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: NawahColors.bgAlt, borderRadius: BorderRadius.circular(NawahRadius.full)),
+                      child: Text(program.ageRangeLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                    ),
+                  Container(
                     margin: const EdgeInsets.only(top: NawahSpacing.s2),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: NawahColors.bgAlt, borderRadius: BorderRadius.circular(NawahRadius.full)),
-                    child: Text(program.ageRangeLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                    decoration: BoxDecoration(color: NawahColors.primarySoft, borderRadius: BorderRadius.circular(NawahRadius.full)),
+                    child: Text(
+                      program.siblingPrice != null
+                          ? '${formatMoney(program.price)} · إخوة ${formatMoney(program.siblingPrice!)}'
+                          : formatMoney(program.price),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: NawahColors.primaryDark),
+                    ),
                   ),
-                ),
+                ],
+              ),
             ],
           ),
         ),

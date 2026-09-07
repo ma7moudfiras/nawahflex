@@ -9,6 +9,8 @@ class Program {
     required this.createdAt,
     this.ageMin,
     this.ageMax,
+    this.price = 0,
+    this.siblingPrice,
   });
 
   final String id;
@@ -18,6 +20,11 @@ class Program {
   final int? ageMax;
   final bool isPublished;
   final DateTime createdAt;
+
+  /// السعر الشهري العادي، وسعره بخصم الإخوة إن وُجد (يجب ألا يتجاوز
+  /// السعر العادي — القاعدة تفرض هذا بقيد CHECK أيضاً).
+  final int price;
+  final int? siblingPrice;
 
   String get ageRangeLabel {
     if (ageMin != null && ageMax != null) return '$ageMin–$ageMax سنة';
@@ -42,6 +49,8 @@ class Program {
         ageMax: (m['age_max'] as num?)?.toInt(),
         isPublished: (m['is_published'] as bool?) ?? true,
         createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+        price: (m['price'] as num?)?.toInt() ?? 0,
+        siblingPrice: (m['sibling_price'] as num?)?.toInt(),
       );
 
   Map<String, dynamic> toInsertMap() => {
@@ -50,5 +59,7 @@ class Program {
         if (ageMin != null) 'age_min': ageMin,
         if (ageMax != null) 'age_max': ageMax,
         'is_published': isPublished,
+        'price': price,
+        if (siblingPrice != null) 'sibling_price': siblingPrice,
       };
 }

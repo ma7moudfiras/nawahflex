@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import '../auth/profile.dart';
+import '../billing/billing_repository.dart';
 import '../students/students_repository.dart';
 import '../trainers/trainers_repository.dart';
 
@@ -14,11 +15,13 @@ class HomeScreen extends StatefulWidget {
     required this.profile,
     required this.counts,
     required this.onGoToMessages,
+    this.onGoToDues,
   });
 
   final Profile? profile;
   final Map<String, int> counts;
   final VoidCallback onGoToMessages;
+  final VoidCallback? onGoToDues;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,15 +30,33 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _studentsRepo = const StudentsRepository();
   final _trainersRepo = const TrainersRepository();
+  final _billingRepo = const BillingRepository();
   int? _studentCount;
   int? _trainerCount;
+  int? _unpaidCount;
 
   @override
   void initState() {
     super.initState();
-    // فشل تحميل العدّادين لا يمنع عرض الشاشة — يبقيان فارغين (—) بصمت.
-    _studentsRepo.count().then((c) { if (mounted) setState(() => _studentCount = c); }).catchError((_) {});
-    _trainersRepo.count().then((c) { if (mounted) setState(() => _trainerCount = c); }).catchError((_) {});
+    // فشل تحميل أي عدّاد لا يمنع عرض الشاشة — يبقى فارغاً (—) بصمت.
+    _studentsRepo
+        .count()
+        .then((c) {
+          if (mounted) setState(() => _studentCount = c);
+        })
+        .catchError((_) {});
+    _trainersRepo
+        .count()
+        .then((c) {
+          if (mounted) setState(() => _trainerCount = c);
+        })
+        .catchError((_) {});
+    _billingRepo
+        .countUnpaid(DateTime.now())
+        .then((c) {
+          if (mounted) setState(() => _unpaidCount = c);
+        })
+        .catchError((_) {});
   }
 
   @override
@@ -50,16 +71,20 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('أهلاً ${profile?.displayName ?? ''}',
-              style: const TextStyle(
-                fontFamily: NawahFonts.display,
-                fontWeight: FontWeight.w800,
-                fontSize: 24,
-                color: NawahColors.ink,
-              )),
+          Text(
+            'أهلاً ${profile?.displayName ?? ''}',
+            style: const TextStyle(
+              fontFamily: NawahFonts.display,
+              fontWeight: FontWeight.w800,
+              fontSize: 24,
+              color: NawahColors.ink,
+            ),
+          ),
           const SizedBox(height: 4),
-          const Text('ملخّص سريع لما يحتاج انتباهك اليوم.',
-              style: TextStyle(color: NawahColors.textSoft)),
+          const Text(
+            'ملخّص سريع لما يحتاج انتباهك اليوم.',
+            style: TextStyle(color: NawahColors.textSoft),
+          ),
           const SizedBox(height: NawahSpacing.s6),
 
           GridView.count(
@@ -68,8 +93,12 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: NawahSpacing.s4,
             mainAxisSpacing: NawahSpacing.s4,
-            childAspectRatio:
-                adaptive(context, mobile: 3.4, tablet: 2.1, desktop: 1.7),
+            childAspectRatio: adaptive(
+              context,
+              mobile: 3.4,
+              tablet: 2.1,
+              desktop: 1.7,
+            ),
             children: [
               _Stat(
                 icon: Icons.mark_email_unread_outlined,
@@ -109,8 +138,12 @@ class _HomeScreenState extends State<HomeScreen> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: NawahSpacing.s4,
             mainAxisSpacing: NawahSpacing.s4,
-            childAspectRatio:
-                adaptive(context, mobile: 3.4, tablet: 2.1, desktop: 1.7),
+            childAspectRatio: adaptive(
+              context,
+              mobile: 3.4,
+              tablet: 2.1,
+              desktop: 1.7,
+            ),
             children: [
               _Stat(
                 icon: Icons.groups_outlined,
@@ -126,9 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _Stat(
                 icon: Icons.receipt_long_outlined,
-                tone: NawahColors.textMuted,
-                value: 'قريباً',
-                label: 'المستحقات — سجلّ الدفعات',
+                tone: NawahColors.rose,
+                value: _unpaidCount == null ? '—' : '$_unpaidCount',
+                label: 'طالب غير مسدَّد هذا الشهر',
+                onTap: widget.onGoToDues,
               ),
             ],
           ),
@@ -144,19 +178,28 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Icon(Icons.construction_outlined,
-                      size: 18, color: NawahColors.textSoft),
-                  SizedBox(width: 8),
-                  Text('قيد البناء',
+                Row(
+                  children: [
+                    Icon(
+                      Icons.construction_outlined,
+                      size: 18,
+                      color: NawahColors.textSoft,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'قيد البناء',
                       style: TextStyle(
-                          fontWeight: FontWeight.w700, color: NawahColors.ink)),
-                ]),
+                        fontWeight: FontWeight.w700,
+                        color: NawahColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
                 SizedBox(height: NawahSpacing.s3),
                 Text(
-                  'الرسائل والطلاب والبرامج والمدرّبون والأفواج والحضور جاهزة وتعمل. '
-                  'الشهادات، حسابات أولياء الأمور، وسجلّ المستحقات (مين دفع ومين لا) '
-                  'هي المرحلة التالية — لم تُبنَ بعد.',
+                  'الرسائل والطلاب والبرامج والمدرّبون والأفواج والحضور والمستحقات '
+                  'جاهزة وتعمل. الشهادات وحسابات أولياء الأمور هي المرحلة التالية '
+                  '— لم تُبنَ بعد.',
                   style: TextStyle(color: NawahColors.textSoft, height: 1.9),
                 ),
               ],
@@ -210,17 +253,23 @@ class _Stat extends StatelessWidget {
                 child: Icon(icon, color: tone, size: 20),
               ),
               const Spacer(),
-              Text(value,
-                  style: const TextStyle(
-                    fontFamily: NawahFonts.display,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 28,
-                    height: 1.1,
-                    color: NawahColors.ink,
-                  )),
-              Text(label,
-                  style:
-                      const TextStyle(color: NawahColors.textSoft, fontSize: 13)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: NawahFonts.display,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 28,
+                  height: 1.1,
+                  color: NawahColors.ink,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: NawahColors.textSoft,
+                  fontSize: 13,
+                ),
+              ),
             ],
           ),
         ),
