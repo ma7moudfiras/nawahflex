@@ -68,6 +68,7 @@ window.API = (function () {
     insert,
     select,
     sendMessage: (row) => insert("messages", row),
-    subscribe:   (email) => insert("subscribers", { email })
+    subscribe:   (email) => insert("subscribers", { email }),
+    stats:       () => select("stats", "select=icon,value,suffix,label&is_published=eq.true&order=sort_order.asc")
   };
 })();

@@ -14,6 +14,7 @@ import 'features/cohorts/cohorts_screen.dart';
 import 'features/dashboard/home_screen.dart';
 import 'features/messages/messages_screen.dart';
 import 'features/programs/programs_screen.dart';
+import 'features/stats/stats_screen.dart';
 import 'features/students/students_screen.dart';
 import 'features/trainers/trainers_screen.dart';
 import 'shared/app_shell.dart';
@@ -263,6 +264,12 @@ class _DashboardShellState extends State<DashboardShell> {
         ),
       if (canManage)
         const NavItem(
+          label: 'الإحصائيات',
+          icon: Icons.bar_chart_outlined,
+          selectedIcon: Icons.bar_chart,
+        ),
+      if (canManage)
+        const NavItem(
           label: 'المدرّبون',
           icon: Icons.badge_outlined,
           selectedIcon: Icons.badge,
@@ -291,6 +298,7 @@ class _DashboardShellState extends State<DashboardShell> {
       if (canManage) MessagesScreen(onCountsChanged: _onCounts),
       if (canManage) const StudentsScreen(),
       if (canManage) const ProgramsScreen(),
+      if (canManage) const StatsScreen(),
       if (canManage) const TrainersScreen(),
       if (canManage) const CohortsScreen(),
       if (canMarkAttendance) const AttendanceScreen(),
