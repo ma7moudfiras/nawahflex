@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/config.dart';
 import 'program.dart';
 
 /// نموذج إضافة/تعديل برنامج — Dialog على الشاشات الواسعة، bottom sheet
@@ -21,6 +22,8 @@ class _ProgramFormState extends State<ProgramForm> {
   late final TextEditingController _description;
   late final TextEditingController _ageMin;
   late final TextEditingController _ageMax;
+  late final TextEditingController _price;
+  late final TextEditingController _siblingPrice;
   bool _busy = false;
 
   @override
@@ -31,11 +34,13 @@ class _ProgramFormState extends State<ProgramForm> {
     _description = TextEditingController(text: p?.description ?? '');
     _ageMin = TextEditingController(text: p?.ageMin?.toString() ?? '');
     _ageMax = TextEditingController(text: p?.ageMax?.toString() ?? '');
+    _price = TextEditingController(text: p?.price.toString() ?? '0');
+    _siblingPrice = TextEditingController(text: p?.siblingPrice?.toString() ?? '');
   }
 
   @override
   void dispose() {
-    for (final c in [_title, _description, _ageMin, _ageMax]) {
+    for (final c in [_title, _description, _ageMin, _ageMax, _price, _siblingPrice]) {
       c.dispose();
     }
     super.dispose();
@@ -53,6 +58,8 @@ class _ProgramFormState extends State<ProgramForm> {
         ageMax: int.tryParse(_ageMax.text.trim()),
         isPublished: widget.initial?.isPublished ?? true,
         createdAt: widget.initial?.createdAt ?? DateTime.now(),
+        price: int.tryParse(_price.text.trim()) ?? 0,
+        siblingPrice: int.tryParse(_siblingPrice.text.trim()),
       ));
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -136,6 +143,46 @@ class _ProgramFormState extends State<ProgramForm> {
                   return const Padding(
                     padding: EdgeInsets.only(top: NawahSpacing.s2),
                     child: Text('الحد الأعلى يجب أن يكون أكبر من أو يساوي الحد الأدنى',
+                        style: TextStyle(color: NawahColors.rose, fontSize: 12)),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+              const SizedBox(height: NawahSpacing.s4),
+
+              const Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text('السعر الشهري',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: NawahColors.textSoft)),
+              ),
+              const SizedBox(height: NawahSpacing.s2),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _price,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: 'السعر العادي (${AppConfig.currencySymbol})'),
+                      validator: (v) => int.tryParse((v ?? '').trim()) == null ? 'رقم صحيح فقط' : null,
+                    ),
+                  ),
+                  const SizedBox(width: NawahSpacing.s3),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _siblingPrice,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: 'سعر خصم الإخوة (اختياري، ${AppConfig.currencySymbol})'),
+                    ),
+                  ),
+                ],
+              ),
+              Builder(builder: (context) {
+                final price = int.tryParse(_price.text.trim());
+                final sibling = int.tryParse(_siblingPrice.text.trim());
+                if (price != null && sibling != null && sibling > price) {
+                  return const Padding(
+                    padding: EdgeInsets.only(top: NawahSpacing.s2),
+                    child: Text('سعر خصم الإخوة يجب ألا يتجاوز السعر العادي',
                         style: TextStyle(color: NawahColors.rose, fontSize: 12)),
                   );
                 }

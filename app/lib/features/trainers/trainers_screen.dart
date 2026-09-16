@@ -29,29 +29,50 @@ class _TrainersScreenState extends State<TrainersScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final items = await _repo.fetch();
       if (!mounted) return;
-      setState(() { _items = items; _loading = false; });
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _error = 'تعذّر تحميل المدرّبين. تحقّق من اتصالك ثم أعد المحاولة.'; });
+      setState(() {
+        _loading = false;
+        _error = 'تعذّر تحميل المدرّبين. تحقّق من اتصالك ثم أعد المحاولة.';
+      });
     }
   }
 
   Future<void> _openForm({Trainer? existing}) async {
-    final accounts = await _repo.fetchAvailableTrainerAccounts(excludingTrainerId: existing?.id);
-    final responsibleCohorts = existing?.profileId == null
-        ? const <Cohort>[]
-        : await _repo.fetchResponsibleCohorts(existing!.profileId!);
+    final accounts = await _repo.fetchAvailableTrainerAccounts(
+      excludingTrainerId: existing?.id,
+    );
+    final hasAccount = existing?.profileId != null;
+    final responsibleCohorts = hasAccount
+        ? await _repo.fetchResponsibleCohorts(existing!.profileId!)
+        : const <Cohort>[];
+    final currentRate = hasAccount
+        ? await _repo.fetchHourlyRate(existing!.profileId!)
+        : null;
+    final rateHistory = hasAccount
+        ? await _repo.fetchRateHistory(existing!.profileId!)
+        : const <TrainerRateChange>[];
     if (!mounted) return;
 
-    Future<void> onSubmit(Trainer t) async {
+    Future<void> onSubmit(Trainer t, double? hourlyRate, String? reason) async {
       if (existing == null) {
         await _repo.create(t);
       } else {
         await _repo.update(existing.id, t);
+      }
+      if (t.profileId != null && hourlyRate != null) {
+        await _repo.setHourlyRate(t.profileId!, hourlyRate, reason: reason);
       }
       await _load();
     }
@@ -61,23 +82,34 @@ class _TrainersScreenState extends State<TrainersScreen> {
       onSubmit: onSubmit,
       availableAccounts: accounts,
       responsibleCohorts: responsibleCohorts,
+      currentHourlyRate: currentRate,
+      rateHistory: rateHistory,
     );
 
     if (context.isWide) {
       await showDialog(
         context: context,
         builder: (_) => Dialog(
-          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480), child: form),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: form,
+          ),
         ),
       );
     } else {
-      await showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => form);
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => form,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _items.isEmpty) return const Center(child: CircularProgressIndicator());
+    if (_loading && _items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     Widget body;
     if (_error != null) {
@@ -85,7 +117,10 @@ class _TrainersScreenState extends State<TrainersScreen> {
         icon: Icons.wifi_off,
         title: 'تعذّر التحميل',
         subtitle: _error!,
-        action: FilledButton.tonal(onPressed: _load, child: const Text('إعادة المحاولة')),
+        action: FilledButton.tonal(
+          onPressed: _load,
+          child: const Text('إعادة المحاولة'),
+        ),
       );
     } else if (_items.isEmpty) {
       body = const _Empty(
@@ -106,7 +141,10 @@ class _TrainersScreenState extends State<TrainersScreen> {
             mainAxisExtent: 150,
           ),
           itemCount: _items.length,
-          itemBuilder: (_, i) => _TrainerCard(trainer: _items[i], onTap: () => _openForm(existing: _items[i])),
+          itemBuilder: (_, i) => _TrainerCard(
+            trainer: _items[i],
+            onTap: () => _openForm(existing: _items[i]),
+          ),
         ),
       );
     }
@@ -147,34 +185,63 @@ class _TrainerCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(trainer.fullName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: NawahColors.ink)),
+                    child: Text(
+                      trainer.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: NawahColors.ink,
+                      ),
+                    ),
                   ),
                   Icon(
-                    trainer.hasAccount ? Icons.verified_user_outlined : Icons.person_off_outlined,
+                    trainer.hasAccount
+                        ? Icons.verified_user_outlined
+                        : Icons.person_off_outlined,
                     size: 16,
-                    color: trainer.hasAccount ? NawahColors.green : NawahColors.textMuted,
+                    color: trainer.hasAccount
+                        ? NawahColors.green
+                        : NawahColors.textMuted,
                   ),
                 ],
               ),
               if (trainer.title != null && trainer.title!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
-                  child: Text(trainer.title!,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: NawahColors.textSoft, fontSize: 12)),
+                  child: Text(
+                    trainer.title!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: NawahColors.textSoft,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               const SizedBox(height: NawahSpacing.s2),
               Expanded(
-                child: Text(trainer.bio ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: NawahColors.textMuted, fontSize: 12, height: 1.6)),
+                child: Text(
+                  trainer.bio ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: NawahColors.textMuted,
+                    fontSize: 12,
+                    height: 1.6,
+                  ),
+                ),
               ),
-              Text(trainer.hasAccount ? 'مرتبط بحساب دخول' : 'بلا حساب دخول',
-                  style: TextStyle(fontSize: 11, color: trainer.hasAccount ? NawahColors.green : NawahColors.textMuted)),
+              Text(
+                trainer.hasAccount ? 'مرتبط بحساب دخول' : 'بلا حساب دخول',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: trainer.hasAccount
+                      ? NawahColors.green
+                      : NawahColors.textMuted,
+                ),
+              ),
             ],
           ),
         ),
@@ -184,7 +251,12 @@ class _TrainerCard extends StatelessWidget {
 }
 
 class _Empty extends StatelessWidget {
-  const _Empty({required this.icon, required this.title, required this.subtitle, this.action});
+  const _Empty({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.action,
+  });
   final IconData icon;
   final String title;
   final String subtitle;
@@ -192,23 +264,34 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(NawahSpacing.s6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 44, color: NawahColors.textMuted),
-              const SizedBox(height: NawahSpacing.s4),
-              Text(title,
-                  style: const TextStyle(
-                    fontFamily: NawahFonts.display, fontWeight: FontWeight.w700,
-                    fontSize: 17, color: NawahColors.ink,
-                  )),
-              const SizedBox(height: NawahSpacing.s2),
-              Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: NawahColors.textSoft, height: 1.7)),
-              if (action != null) ...[const SizedBox(height: NawahSpacing.s5), action!],
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(NawahSpacing.s6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 44, color: NawahColors.textMuted),
+          const SizedBox(height: NawahSpacing.s4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: NawahFonts.display,
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+              color: NawahColors.ink,
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: NawahSpacing.s2),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: NawahColors.textSoft, height: 1.7),
+          ),
+          if (action != null) ...[
+            const SizedBox(height: NawahSpacing.s5),
+            action!,
+          ],
+        ],
+      ),
+    ),
+  );
 }
