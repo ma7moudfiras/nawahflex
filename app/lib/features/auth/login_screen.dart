@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../brand/logo.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import 'auth_service.dart';
@@ -62,7 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('لوحة إدارة نواة فليكس',
+                      const Center(child: NawahLogo(height: 64)),
+                      const SizedBox(height: NawahSpacing.s5),
+                      const Text('لوحة إدارة أكاديمية نواة',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: NawahFonts.display,
@@ -120,12 +123,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
+                            color: NawahColors.errSoft,
                             borderRadius: BorderRadius.circular(NawahRadius.sm),
-                            border: Border.all(color: const Color(0xFFFECACA)),
+                            border: Border.all(color: NawahColors.err.withValues(alpha: .25)),
                           ),
                           child: Text(_error!,
-                              style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13)),
+                              style: const TextStyle(color: NawahColors.err, fontSize: 13)),
                         ),
                       ],
 

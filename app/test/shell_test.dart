@@ -72,7 +72,7 @@ void main() {
       await t.pumpWidget(shell(const Size(1440, 900)));
       final rail = t.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.extended, isTrue);
-      expect(find.text('نواة فليكس'), findsOneWidget);
+      expect(find.text('أكاديمية نواة'), findsOneWidget);
       expect(find.text('لوحة الإدارة'), findsOneWidget);
     });
 

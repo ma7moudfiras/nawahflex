@@ -79,7 +79,7 @@ class _NawahAppState extends State<NawahApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'نواة فليكس — لوحة الإدارة',
+      title: 'أكاديمية نواة — لوحة الإدارة',
       debugShowCheckedModeBanner: false,
       theme: NawahTheme.light,
 
@@ -116,7 +116,7 @@ class _BootError extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off, size: 46, color: Color(0xFF6B7A9C)),
+                const Icon(Icons.cloud_off, size: 46, color: NawahColors.invertSoft),
                 const SizedBox(height: NawahSpacing.s4),
                 const Text(
                   'تعذّر تشغيل اللوحة',
@@ -131,7 +131,7 @@ class _BootError extends StatelessWidget {
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF93A2C2), height: 1.8),
+                  style: const TextStyle(color: NawahColors.invertSoft, height: 1.8),
                 ),
                 const SizedBox(height: NawahSpacing.s5),
                 FilledButton.icon(

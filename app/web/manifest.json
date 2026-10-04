@@ -1,11 +1,11 @@
 {
-    "name": "nawahflex_app",
-    "short_name": "nawahflex_app",
+    "name": "أكاديمية نواة — لوحة الإدارة",
+    "short_name": "لوحة نواة",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1B2A41",
+    "theme_color": "#1B2A41",
+    "description": "لوحة إدارة أكاديمية نواة",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

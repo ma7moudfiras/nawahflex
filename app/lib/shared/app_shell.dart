@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../brand/logo.dart';
 import '../brand/tokens.dart';
 import 'adaptive.dart';
 import 'nav_item.dart';
@@ -65,7 +66,7 @@ class AppShell extends StatelessWidget {
             selectedIndex: index,
             onDestinationSelected: onSelect,
             backgroundColor: NawahColors.ink,
-            indicatorColor: NawahColors.primary.withValues(alpha: .22),
+            indicatorColor: NawahColors.inkLine,
             leading: _RailHeader(extended: extended),
             trailing: Expanded(
               child: Align(
@@ -93,10 +94,10 @@ class AppShell extends StatelessWidget {
               fontFamily: NawahFonts.body,
             ),
             unselectedLabelTextStyle: const TextStyle(
-              color: Color(0xFF93A2C2),
+              color: NawahColors.invertSoft,
               fontFamily: NawahFonts.body,
             ),
-            unselectedIconTheme: const IconThemeData(color: Color(0xFF93A2C2)),
+            unselectedIconTheme: const IconThemeData(color: NawahColors.invertSoft),
             selectedIconTheme: const IconThemeData(color: Colors.white),
           ),
           const VerticalDivider(width: 1, color: NawahColors.border),
@@ -149,7 +150,7 @@ class _Badged extends StatelessWidget {
     return Badge.count(
       count: count,
       backgroundColor: NawahColors.accent,
-      textColor: const Color(0xFF3D2600),
+      textColor: NawahColors.onAccent,
       child: child,
     );
   }
@@ -167,13 +168,13 @@ class _RailHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _Nucleus(size: 34),
+          const NawahLogo(height: 34, color: NawahColors.textInvert),
           if (extended) ...[
             const SizedBox(width: NawahSpacing.s3),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('نواة فليكس',
+                Text('أكاديمية نواة',
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: NawahFonts.display,
@@ -181,7 +182,7 @@ class _RailHeader extends StatelessWidget {
                       fontSize: 15,
                     )),
                 Text('لوحة الإدارة',
-                    style: TextStyle(color: Color(0xFF6B7A9C), fontSize: 11)),
+                    style: TextStyle(color: NawahColors.invertSoft, fontSize: 11)),
               ],
             ),
           ],
@@ -189,46 +190,6 @@ class _RailHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-/// شعار النواة — نفس فكرة شعار الموقع، مرسوم بـ Flutter لا صورة.
-class _Nucleus extends StatelessWidget {
-  const _Nucleus({this.size = 34});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.rotate(angle: -0.5, child: _ring(NawahColors.cyan)),
-          Transform.rotate(angle: 0.56, child: _ring(NawahColors.violet)),
-          Container(
-            width: size * 0.36,
-            height: size * 0.36,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFF60A5FA), NawahColors.primary],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ring(Color c) => Container(
-        width: size,
-        height: size * 0.42,
-        decoration: BoxDecoration(
-          border: Border.all(color: c, width: 1.4),
-          borderRadius: BorderRadius.all(Radius.elliptical(size, size * 0.42)),
-        ),
-      );
 }
 
 class _TopBar extends StatelessWidget {

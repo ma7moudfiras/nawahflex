@@ -1,18 +1,37 @@
 {
-  "name": "أكاديمية نواة فليكس",
-  "short_name": "نواة فليكس",
-  "description": "الروبوتات والبرمجة والذكاء الاصطناعي و STEM والقيادة — نحو جيل يقود المستقبل.",
+  "name": "أكاديمية نواة",
+  "short_name": "نواة",
+  "description": "الروبوتات والبرمجة والذكاء الاصطناعي و STEM والقيادة للأعمار 6–18 — كل اختراع يبدأ بنواة.",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#070C1E",
-  "theme_color": "#070C1E",
+  "background_color": "#1B2A41",
+  "theme_color": "#1B2A41",
   "icons": [
-    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }

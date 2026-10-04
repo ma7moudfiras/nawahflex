@@ -79,11 +79,14 @@ flutter:
           weight: 600
         - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
           weight: 700
-    - family: Tajawal
+    # خطّ الشعار والعناوين — نسخ ثابتة من Alexandria المتغيّر بالأوزان المستعملة فقط
+    - family: Alexandria
       fonts:
-        - asset: assets/fonts/Tajawal-Bold.ttf
+        - asset: assets/fonts/Alexandria-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Alexandria-Bold.ttf
           weight: 700
-        - asset: assets/fonts/Tajawal-ExtraBold.ttf
+        - asset: assets/fonts/Alexandria-ExtraBold.ttf
           weight: 800
 
   # To add assets to your application, add an assets section, like this:
