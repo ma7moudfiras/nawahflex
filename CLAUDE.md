@@ -88,7 +88,8 @@ nawahflex/
 ├─ supabase/migrations/         مخطط قاعدة البيانات + سياسات RLS
 ├─ supabase/tests/              rls_visibility.sql — ما يراه كل دور (قبل/بعد أي تعديل RLS)
 ├─ DECISIONS.md                 سجلّ القرارات المحسومة وسببها — راجعه قبل نقض أيٍّ منها
-├─ brand/                       ملفات الشعار للاستعمال الخارجي (SVG + PNG ‏2000px) — كحلي/أبيض، شفاف وعلى مربع
+├─ brand/                       ملفات الشعار للاستعمال الخارجي (SVG + PNG ‏2000px) — كحلي/أبيض، شفاف وعلى مربع؛
+│                               nawah-lockup-* = الشعار + NAWAH ACADEMY (Alexandria Bold، مولّد بـ brand/src/make_lockup.py)
 └─ vercel.json                  إعدادات النشر (outputDirectory: site)
 
 ⚠️ `site/app/` مخرجات بناء — تُولَّد على Vercel ولا تدخل git.
