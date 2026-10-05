@@ -90,6 +90,7 @@ nawahflex/
 ├─ DECISIONS.md                 سجلّ القرارات المحسومة وسببها — راجعه قبل نقض أيٍّ منها
 ├─ brand/                       ملفات الشعار للاستعمال الخارجي (SVG + PNG ‏2000px) — كحلي/أبيض، شفاف وعلى مربع؛
 │                               nawah-lockup-* = الشعار + NAWAH ACADEMY (Alexandria Bold، مولّد بـ brand/src/make_lockup.py)
+│                               nawah-profile-picture = صورة الحسابات (فيسبوك…) — آمنة داخل القصّ الدائري
 └─ vercel.json                  إعدادات النشر (outputDirectory: site)
 
 ⚠️ `site/app/` مخرجات بناء — تُولَّد على Vercel ولا تدخل git.
