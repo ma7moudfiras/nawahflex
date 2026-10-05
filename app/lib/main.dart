@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
@@ -31,6 +32,13 @@ Future<void> main() async {
   // المتصفح — بعض المتصفحات تبلّغ لغة فارغة أو غير قابلة للتحليل فيرمي
   // intl خطأ «Incorrect locale information provided» وتبقى الشاشة بيضاء.
   Intl.defaultLocale = 'ar';
+
+  // على الويب يعرض سفاري عدسته الخاصة فوق الحقل المخفي دائماً؛ عدسة Flutter
+  // فوقها = عدستان، وتعلق عدسة Flutter أحياناً بعد رفع الإصبع. نتركها للمتصفح.
+  if (kIsWeb) {
+    TextMagnifier.adaptiveMagnifierConfiguration =
+        TextMagnifierConfiguration.disabled;
+  }
 
   // لا يُنتظر التهيئة قبل runApp بلا حدّ: لو تعذّر الوصول إلى Supabase
   // (لا إنترنت، أو الخدمة متوقّفة) لبقي المستخدم أمام شاشة بيضاء بلا أي

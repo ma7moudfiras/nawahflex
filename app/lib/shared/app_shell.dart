@@ -233,6 +233,9 @@ class AppShell extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
+      // بلا هذا يُقصّ اللوح عند ٩/١٦ من الشاشة فيختفي «تسجيل الخروج» تحت
+      // الحافة؛ هكذا يأخذ طول محتواه (ويتمرّر فقط إن تجاوز الشاشة).
+      isScrollControlled: true,
       builder: (sheet) => SafeArea(
         top: false,
         child: SingleChildScrollView(

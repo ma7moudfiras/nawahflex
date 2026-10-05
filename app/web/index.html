@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -22,7 +22,13 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- default لا black: مع black يُحسب أول ارتفاع للشاشة على الآيفون (من أيقونة
+       الشاشة الرئيسية) أطول من المساحة المرئية فيزاح المحتوى واللمس. ولا
+       black-translucent: يرسم تحت شريط الحالة ويحتاج معالجة منطقة آمنة.
+       ⚠️ iOS يحفظ هذه القيمة وقت إضافة الأيقونة — من أضافها قبل التغيير
+       يحذفها ويضيفها من جديد. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#1B2A41">
   <meta name="apple-mobile-web-app-title" content="لوحة نواة">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -30,6 +36,21 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>أكاديمية نواة — لوحة الإدارة</title>
+
+  <!-- نفس خطوط Flutter مسجّلة للمتصفح أيضاً. وراء كل حقل نص على الويب عنصر
+       <input> مخفي يحدّد فيه سفاري بنفسه؛ لو لم يعرف المتصفح الخط لرسمه
+       بخط آخر، فتقع مقابض التحديد على غير الحروف التي يرسمها Flutter. -->
+  <style>
+    @font-face { font-family: "IBMPlexSansArabic"; font-weight: 400; font-display: swap; src: url("assets/assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype"); }
+    @font-face { font-family: "IBMPlexSansArabic"; font-weight: 500; font-display: swap; src: url("assets/assets/fonts/IBMPlexSansArabic-Medium.ttf") format("truetype"); }
+    @font-face { font-family: "IBMPlexSansArabic"; font-weight: 600; font-display: swap; src: url("assets/assets/fonts/IBMPlexSansArabic-SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "IBMPlexSansArabic"; font-weight: 700; font-display: swap; src: url("assets/assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Alexandria"; font-weight: 600; font-display: swap; src: url("assets/assets/fonts/Alexandria-SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Alexandria"; font-weight: 700; font-display: swap; src: url("assets/assets/fonts/Alexandria-Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Alexandria"; font-weight: 800; font-display: swap; src: url("assets/assets/fonts/Alexandria-ExtraBold.ttf") format("truetype"); }
+    /* خلفية الإقلاع بلون شاشة الدخول — لا وميض أبيض قبل أول إطار */
+    html, body { background: #1B2A41; }
+  </style>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>

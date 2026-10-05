@@ -1,7 +1,11 @@
 {
+    "id": "/app/",
     "name": "أكاديمية نواة — لوحة الإدارة",
     "short_name": "لوحة نواة",
-    "start_url": ".",
+    "start_url": "/app/",
+    "scope": "/app/",
+    "lang": "ar",
+    "dir": "rtl",
     "display": "standalone",
     "background_color": "#1B2A41",
     "theme_color": "#1B2A41",
