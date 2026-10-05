@@ -1,18 +1,22 @@
 -- ============================================================================
--- ⏸ غير مطبَّق — يحتاج تشغيلاً يدوياً من محرّر SQL في لوحة Supabase.
+-- 0011 — تقسيم سياسات «for all» (أداء فقط — الصلاحيات لا تتغيّر)
 -- ----------------------------------------------------------------------------
--- يقسّم سياسات «for all» إلى insert/update/delete ويدمج المتكرّر منها، فيُسكت
--- تحذيرات multiple_permissive_policies (٢٢ تحذير أداء، لا أمان).
+-- طريقة التطبيق:
+--   ١. لوحة Supabase ← مشروع nawahflex ← SQL Editor ← New query.
+--   ٢. الصق هذا الملف كاملاً واضغط Run. سيطلب تأكيداً لأن فيه DROP — وافق.
+--   ٣. آخر نتيجة تظهر: عدد السياسات لكل جدول. المتوقَّع: صفر سياسات «ALL»
+--      إلا في الجداول المالية السبعة (admin only) التي لم يمسّها الملف.
 --
--- لماذا لم يُطبَّق مع 0010؟ يحتاج DROP POLICY، وأداة Supabase في جلسات
--- Claude تطلب تأكيداً تفاعلياً لأي أمر هادم فتتوقّف بلا جواب. الأثر الآن
--- ضئيل (عشرات الصفوف)؛ يستحق التطبيق حين تكبر الجداول.
+-- كل الملف داخل begin/commit: إن فشل أي سطر لا يُطبَّق شيء إطلاقاً.
 --
--- قبل التشغيل وبعده: supabase/tests/rls_visibility.sql — يجب أن تتطابق
--- الأعداد لكل دور حرفياً. ثم انقل هذا الملف إلى migrations/ برقم تالٍ.
---
--- ملاحظة: يفترض الحالة بعد 0010 (auth.uid() ملفوفة بـ select).
+-- ماذا يفعل: سياسات «for all» للكتابة كانت تشمل SELECT أيضاً، فكان كل جدول
+-- يقيّم سياستَي قراءة لكل صف. تُقسَّم هنا إلى insert/update/delete، وسياسة
+-- القراءة الموجودة تشمل الإدارة أصلاً (or is_admin). وحيث وُجدت سياستان للفعل
+-- نفسه دُمجتا بـ OR — والسياسات المتساهلة تُجمع بـ OR أصلاً، فالدمج مكافئ.
+-- يُسكت ٢٢ تحذير multiple_permissive_policies.
 -- ============================================================================
+
+begin;
 
 -- ---------------------------------------------------------------------------
 -- ٢-أ. المحتوى العام للموقع: قراءة عامة للمنشور، وكتابة للإدارة وحدها.
@@ -261,4 +265,14 @@ create policy "profiles: admin insert" on public.profiles for insert to authenti
 create policy "profiles: admin delete" on public.profiles for delete to authenticated
   using ((select private.is_admin()));
 
+commit;
 
+-- التحقّق: عدد السياسات لكل جدول ونوعها
+select tablename,
+       count(*) filter (where cmd = 'ALL')    as all_,
+       count(*) filter (where cmd = 'SELECT') as sel,
+       count(*) filter (where cmd = 'INSERT') as ins,
+       count(*) filter (where cmd = 'UPDATE') as upd,
+       count(*) filter (where cmd = 'DELETE') as del
+from pg_policies where schemaname = 'public'
+group by tablename order by all_ desc, tablename;
