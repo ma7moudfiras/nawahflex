@@ -8,7 +8,7 @@ import '../students/students_repository.dart';
 import '../trainers/trainers_repository.dart';
 
 /// نظرة عامة — أرقام سريعة وروابط للمهام الشائعة.
-/// الشبكة تتكيّف: عمود على الجوّال، عمودان على اللوحي، أربعة على المكتب.
+/// الشبكة تتكيّف: عمودان على الجوّال واللوحي، أربعة على المكتب.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final profile = widget.profile;
     final counts = widget.counts;
     final onGoToMessages = widget.onGoToMessages;
-    final cols = adaptive(context, mobile: 1, tablet: 2, desktop: 4);
+    final cols = adaptive(context, mobile: 2, tablet: 2, desktop: 4);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(adaptive(context, mobile: 16.0, desktop: 32.0)),
@@ -91,11 +91,11 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisCount: cols,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: NawahSpacing.s4,
-            mainAxisSpacing: NawahSpacing.s4,
+            crossAxisSpacing: NawahSpacing.s3,
+            mainAxisSpacing: NawahSpacing.s3,
             childAspectRatio: adaptive(
               context,
-              mobile: 3.4,
+              mobile: 1.3,
               tablet: 2.1,
               desktop: 1.7,
             ),
@@ -131,16 +131,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          const SizedBox(height: NawahSpacing.s6),
+          const SizedBox(height: NawahSpacing.s3),
           GridView.count(
             crossAxisCount: cols,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: NawahSpacing.s4,
-            mainAxisSpacing: NawahSpacing.s4,
+            crossAxisSpacing: NawahSpacing.s3,
+            mainAxisSpacing: NawahSpacing.s3,
             childAspectRatio: adaptive(
               context,
-              mobile: 3.4,
+              mobile: 1.3,
               tablet: 2.1,
               desktop: 1.7,
             ),
@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          const SizedBox(height: NawahSpacing.s7),
+          const SizedBox(height: NawahSpacing.s5),
           Container(
             padding: const EdgeInsets.all(NawahSpacing.s5),
             decoration: BoxDecoration(
@@ -235,7 +235,9 @@ class _Stat extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(NawahRadius.md),
         child: Container(
-          padding: const EdgeInsets.all(NawahSpacing.s5),
+          padding: EdgeInsets.all(
+            adaptive(context, mobile: NawahSpacing.s4, desktop: NawahSpacing.s5),
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(NawahRadius.md),
             border: Border.all(color: NawahColors.border),
@@ -258,16 +260,19 @@ class _Stat extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: NawahFonts.display,
                   fontWeight: FontWeight.w800,
-                  fontSize: 28,
+                  fontSize: 26,
                   height: 1.1,
                   color: NawahColors.ink,
                 ),
               ),
               Text(
                 label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: NawahColors.textSoft,
                   fontSize: 13,
+                  height: 1.35,
                 ),
               ),
             ],

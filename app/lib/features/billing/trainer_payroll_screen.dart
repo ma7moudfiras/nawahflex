@@ -74,7 +74,8 @@ class _TrainerPayrollScreenState extends State<TrainerPayrollScreen> {
             children: [
               IconButton(
                 onPressed: () => _shiftMonth(-1),
-                icon: const Icon(Icons.chevron_right),
+                tooltip: 'الشهر السابق',
+                icon: const Icon(Icons.chevron_left),
               ),
               Expanded(
                 child: Text(
@@ -89,7 +90,8 @@ class _TrainerPayrollScreenState extends State<TrainerPayrollScreen> {
               ),
               IconButton(
                 onPressed: () => _shiftMonth(1),
-                icon: const Icon(Icons.chevron_left),
+                tooltip: 'الشهر التالي',
+                icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
@@ -189,9 +191,9 @@ class _PayrollRow extends StatelessWidget {
             label: Text(item.isPaid ? 'مسدَّد' : 'غير مسدَّد'),
             selected: item.isPaid,
             onSelected: (_) => onTogglePaid(),
-            selectedColor: NawahColors.green.withValues(alpha: .18),
+            selectedColor: NawahColors.okSoft,
             labelStyle: TextStyle(
-              color: item.isPaid ? NawahColors.green : NawahColors.textSoft,
+              color: item.isPaid ? NawahColors.ok : NawahColors.textSoft,
               fontWeight: FontWeight.w700,
             ),
           ),

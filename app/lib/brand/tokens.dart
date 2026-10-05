@@ -159,6 +159,119 @@ class NawahTheme {
             borderRadius: BorderRadius.circular(NawahRadius.sm),
             borderSide: const BorderSide(color: NawahColors.border, width: 1.5),
           ),
+          // بدون enabledBorder صريح يرسم Material الحدّ بلون outline من البذرة
+          // (رمادي مزرقّ) لا بحدود الهوية الدافئة.
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.sm),
+            borderSide: const BorderSide(color: NawahColors.border, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.sm),
+            borderSide: const BorderSide(color: NawahColors.ink, width: 2),
+          ),
         ),
+
+        // ---- الجوّال: شريط علوي على الورق، بلا ظلّ ولا تلوّن عند التمرير ----
+        appBarTheme: const AppBarTheme(
+          backgroundColor: NawahColors.paper,
+          foregroundColor: NawahColors.ink,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            fontFamily: NawahFonts.display,
+            fontWeight: FontWeight.w800,
+            fontSize: 19,
+            color: NawahColors.ink,
+          ),
+        ),
+
+        // زر الإضافة العائم بلون الحبر — لا الأزرق الفاتح المشتقّ من البذرة.
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: NawahColors.ink,
+          foregroundColor: NawahColors.textInvert,
+          elevation: 2,
+          highlightElevation: 4,
+          shape: StadiumBorder(),
+          extendedTextStyle: TextStyle(
+            fontFamily: NawahFonts.body,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        // الشريط السفلي: أبيض بحدّ علوي رفيع، والمختار بخلفية حبر فاتحة.
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: NawahColors.inkTint,
+          height: 66,
+          elevation: 0,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          iconTheme: WidgetStateProperty.resolveWith(
+            (s) => IconThemeData(
+              size: 23,
+              color: s.contains(WidgetState.selected)
+                  ? NawahColors.ink
+                  : NawahColors.textMuted,
+            ),
+          ),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (s) => TextStyle(
+              fontFamily: NawahFonts.body,
+              fontSize: 11.5,
+              fontWeight: s.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              color: s.contains(WidgetState.selected)
+                  ? NawahColors.ink
+                  : NawahColors.textMuted,
+            ),
+          ),
+        ),
+
+        // النماذج على الجوّال: لوح سفلي بمقبض سحب وزوايا علوية مستديرة.
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          showDragHandle: true,
+          dragHandleColor: NawahColors.border,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(NawahRadius.lg)),
+          ),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.lg),
+          ),
+        ),
+
+        // تنبيهات عائمة فوق الشريط السفلي، لا ملتصقة تحته.
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: NawahColors.ink,
+          contentTextStyle: TextStyle(
+            fontFamily: NawahFonts.body,
+            color: NawahColors.textInvert,
+          ),
+        ),
+
+        chipTheme: ChipThemeData(
+          backgroundColor: NawahColors.card,
+          selectedColor: NawahColors.inkTint,
+          side: const BorderSide(color: NawahColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.full),
+          ),
+          labelStyle: const TextStyle(
+            fontFamily: NawahFonts.body,
+            color: NawahColors.ink,
+            fontWeight: FontWeight.w600,
+          ),
+          checkmarkColor: NawahColors.ink,
+        ),
+        dividerTheme: const DividerThemeData(color: NawahColors.borderSoft),
       );
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/errors.dart';
+import '../../shared/form_error.dart';
 import '../../core/config.dart';
 import '../../shared/audit.dart';
 import '../auth/profile.dart';
@@ -52,6 +54,7 @@ class _TrainerFormState extends State<TrainerForm> {
   String? _profileId;
   bool _isPublished = true;
   bool _busy = false;
+  String? _saveError;
   bool _showRateHistory = false;
 
   @override
@@ -85,7 +88,10 @@ class _TrainerFormState extends State<TrainerForm> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _saveError = null;
+    });
     try {
       final newRate = _profileId == null
           ? null
@@ -107,14 +113,8 @@ class _TrainerFormState extends State<TrainerForm> {
             : null,
       );
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تعذّر الحفظ — تأكّد من اتصالك وحاول مجدداً.'),
-          ),
-        );
-      }
+    } catch (e, st) {
+      if (mounted) setState(() => _saveError = userMessageFor(e, st));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -390,6 +390,7 @@ class _TrainerFormState extends State<TrainerForm> {
               ],
 
               const SizedBox(height: NawahSpacing.s6),
+              FormErrorBanner(message: _saveError),
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy

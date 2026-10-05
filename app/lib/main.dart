@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 
 import 'brand/tokens.dart';
+import 'core/error_reporter.dart';
 import 'core/reload.dart';
 import 'core/supabase.dart';
 import 'features/attendance/attendance_screen.dart';
@@ -40,6 +42,21 @@ Future<void> main() async {
         'استغرق الاتصال بالخادم وقتاً طويلاً. تحقّق من اتصالك بالإنترنت.';
   } catch (e) {
     bootError = 'تعذّر الاتصال بخادم الأكاديمية. حاول مجدداً بعد قليل.';
+  }
+
+  // أخطاء اللوحة الحيّة تصل إلى client_errors بدل أن تضيع في console
+  // جوّال لا يفتحه أحد. التسجيل يحتاج جلسة، فلا يعمل قبل الدخول.
+  if (bootError == null) {
+    ErrorReporter.instance = ErrorReporter.supabase(Db.client);
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      (previous ?? FlutterError.presentError)(details);
+      ErrorReporter.reportIfEnabled(details.exception, details.stack);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      ErrorReporter.reportIfEnabled(error, stack);
+      return false; // يبقى السلوك الافتراضي (طباعة في console) كما هو
+    };
   }
 
   runApp(NawahApp(bootError: bootError));
@@ -165,12 +182,54 @@ class _Gate extends StatelessWidget {
     // الصلاحية تُفحص هنا للواجهة، لكن الحماية الحقيقية في RLS —
     // حتى لو تجاوز أحدهم هذه الشاشة، لن يعيد له الخادم صفاً واحداً.
     // المدرّب يدخل أيضاً (لشاشة الحضور فقط) — وليس الإدارة/التحرير حصراً.
+    // تعذّر قراءة الصلاحية (شبكة، مهلة) ليس «لا صلاحية لك» — نقول ذلك صراحةً.
+    if (auth.error != null) return _ProfileError(auth: auth);
+
     final p = auth.profile;
     if (p == null || !(p.canManage || p.isTrainer)) {
       return _NoAccess(auth: auth);
     }
 
     return DashboardShell(auth: auth);
+  }
+}
+
+class _ProfileError extends StatelessWidget {
+  const _ProfileError({required this.auth});
+  final AuthService auth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(NawahSpacing.s6),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.wifi_off, size: 46, color: NawahColors.textMuted),
+                const SizedBox(height: NawahSpacing.s4),
+                Text(
+                  auth.error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: NawahColors.textSoft, height: 1.8),
+                ),
+                const SizedBox(height: NawahSpacing.s5),
+                FilledButton.icon(
+                  onPressed: auth.retry,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('إعادة المحاولة'),
+                ),
+                const SizedBox(height: NawahSpacing.s2),
+                TextButton(onPressed: auth.signOut, child: const Text('تسجيل الخروج')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -260,6 +319,7 @@ class _DashboardShellState extends State<DashboardShell> {
         canManage,
         const NavItem(
           label: 'نظرة عامة',
+          pinned: true,
           icon: Icons.dashboard_outlined,
           selectedIcon: Icons.dashboard,
         ),
@@ -274,6 +334,7 @@ class _DashboardShellState extends State<DashboardShell> {
         canManage,
         NavItem(
           label: 'الرسائل',
+          pinned: true,
           icon: Icons.inbox_outlined,
           selectedIcon: Icons.inbox,
         ).withBadge(_counts['new'] ?? 0),
@@ -283,6 +344,7 @@ class _DashboardShellState extends State<DashboardShell> {
         canManage,
         const NavItem(
           label: 'الطلاب',
+          pinned: true,
           icon: Icons.groups_outlined,
           selectedIcon: Icons.groups,
         ),
@@ -337,6 +399,7 @@ class _DashboardShellState extends State<DashboardShell> {
         canMarkAttendance,
         const NavItem(
           label: 'اللقاءات',
+          pinned: true,
           icon: Icons.checklist_outlined,
           selectedIcon: Icons.checklist,
         ),

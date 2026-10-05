@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
-import '../../shared/adaptive.dart';
+import '../../shared/card_grid.dart';
+import '../../shared/sheets.dart';
 import '../auth/profile.dart';
 import '../programs/program.dart';
 import '../programs/programs_repository.dart';
@@ -75,16 +76,7 @@ class _CohortsScreenState extends State<CohortsScreen> {
       initialStudentIds: initialStudentIds,
     );
 
-    if (context.isWide) {
-      await showDialog(
-        context: context,
-        builder: (_) => Dialog(
-          child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520), child: form),
-        ),
-      );
-    } else {
-      await showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => form);
-    }
+    await showAdaptiveSheet<void>(context, maxWidth: 520, builder: (_) => form);
   }
 
   @override
@@ -106,17 +98,10 @@ class _CohortsScreenState extends State<CohortsScreen> {
         subtitle: 'اضغط زر الإضافة لإنشاء أول فوج وإسناد مدرّب وطلاب له.',
       );
     } else {
-      final columns = adaptive(context, mobile: 1, tablet: 2, desktop: 3);
       body = RefreshIndicator(
         onRefresh: _load,
-        child: GridView.builder(
-          padding: const EdgeInsets.all(NawahSpacing.s4),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: NawahSpacing.s3,
-            crossAxisSpacing: NawahSpacing.s3,
-            mainAxisExtent: 190,
-          ),
+        child: CardGrid(
+          extent: 190,
           itemCount: _items.length,
           itemBuilder: (_, i) => _CohortCard(cohort: _items[i], onTap: () => _openForm(existing: _items[i])),
         ),

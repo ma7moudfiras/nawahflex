@@ -8,6 +8,7 @@ class NavItem {
     required this.icon,
     required this.selectedIcon,
     this.badgeCount = 0,
+    this.pinned = false,
   });
 
   final String label;
@@ -15,10 +16,15 @@ class NavItem {
   final IconData selectedIcon;
   final int badgeCount;
 
+  /// يظهر مباشرة في الشريط السفلي على الجوّال. غير المثبَّت يذهب إلى
+  /// «المزيد» — الشريط يتّسع لأربعة عناصر مقروءة، لا لتسعة.
+  final bool pinned;
+
   NavItem withBadge(int count) => NavItem(
         label: label,
         icon: icon,
         selectedIcon: selectedIcon,
         badgeCount: count,
+        pinned: pinned,
       );
 }

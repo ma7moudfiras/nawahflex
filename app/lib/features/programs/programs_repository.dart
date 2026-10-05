@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import 'program.dart';
 
@@ -17,6 +18,6 @@ class ProgramsRepository {
   }
 
   Future<void> update(String id, Program p) async {
-    await Db.client.from('programs').update(p.toInsertMap()).eq('id', id);
+    expectRows(await Db.client.from('programs').update(p.toInsertMap()).eq('id', id).select('id'));
   }
 }

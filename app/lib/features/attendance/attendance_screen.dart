@@ -303,12 +303,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
                 const SizedBox(height: NawahSpacing.s3),
               ],
-              DropdownButton<Cohort>(
-                value: cohorts.contains(_selectedCohort)
+              // حقل بإطار وعنوان مثل حقل المدرّب فوقه — كان سهماً عائماً بلا
+              // إطار لا يبدو قابلاً للضغط على الجوّال.
+              DropdownButtonFormField<Cohort>(
+                // initialValue يُقرأ مرة واحدة؛ المفتاح يعيد بناء الحقل حين
+                // يتغيّر الفوج المختار من خارجه (تصفية بالمدرّب مثلاً).
+                key: ValueKey(_selectedCohort?.id),
+                initialValue: cohorts.contains(_selectedCohort)
                     ? _selectedCohort
                     : null,
                 isExpanded: true,
-                underline: const SizedBox.shrink(),
+                decoration: const InputDecoration(labelText: 'الفوج'),
                 hint: const Text('اختر فوجاً'),
                 items: cohorts
                     .map(
@@ -385,7 +390,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             trailing: const Icon(
-                              Icons.chevron_left,
+                              Icons.chevron_right,
                               color: NawahColors.textMuted,
                             ),
                           ),
@@ -966,9 +971,9 @@ class _RosterList extends StatelessWidget {
   final void Function(String studentId, String status) onPick;
 
   static const _colors = <String, Color>{
-    AttendanceStatus.present: NawahColors.green,
-    AttendanceStatus.absent: NawahColors.rose,
-    AttendanceStatus.late: NawahColors.accent,
+    AttendanceStatus.present: NawahColors.ok,
+    AttendanceStatus.absent: NawahColors.err,
+    AttendanceStatus.late: NawahColors.accentInk,
     AttendanceStatus.excused: NawahColors.cyan,
   };
 
@@ -1073,9 +1078,9 @@ class _MeetingDetailScreen extends StatelessWidget {
   final VoidCallback onEdit;
 
   static const _colors = <String, Color>{
-    AttendanceStatus.present: NawahColors.green,
-    AttendanceStatus.absent: NawahColors.rose,
-    AttendanceStatus.late: NawahColors.accent,
+    AttendanceStatus.present: NawahColors.ok,
+    AttendanceStatus.absent: NawahColors.err,
+    AttendanceStatus.late: NawahColors.accentInk,
     AttendanceStatus.excused: NawahColors.cyan,
   };
 

@@ -57,6 +57,22 @@ class AppShell extends StatelessWidget {
   Widget _wide(BuildContext context) {
     final extended = context.isDesktop;
 
+    // NavigationRail يشترط عنصرين على الأقل — المدرّب له قسم واحد فقط
+    // (اللقاءات)، فيُعرض بلا تنقّل بدل أن ينهار التطبيق.
+    if (items.length < 2) {
+      return Scaffold(
+        body: Column(
+          children: [
+            _TopBar(
+              title: title ?? items.first.label,
+              actions: [...?actions, _AccountButton(account: account, extended: false)],
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: Row(
         children: [
@@ -115,24 +131,168 @@ class AppShell extends StatelessWidget {
   }
 
   // ---------- جوّال ----------
+  //
+  // الشريط السفلي يتّسع لأربعة عناصر بأسماء مقروءة. الأقسام المثبَّتة
+  // (NavItem.pinned) تظهر فيه مباشرة، والباقي خلف «المزيد» في لوح سفلي —
+  // بدل تسعة أيقونات متلاصقة تنكسر أسماؤها على سطرين.
+  static const _maxPinned = 4;
+
   Widget _narrow(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title ?? items[index].label),
-        actions: [...?actions, _AccountButton(account: account, extended: false)],
-      ),
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: onSelect,
-        destinations: [
-          for (final it in items)
-            NavigationDestination(
-              icon: _Badged(count: it.badgeCount, child: Icon(it.icon)),
-              selectedIcon: _Badged(count: it.badgeCount, child: Icon(it.selectedIcon)),
-              label: it.label,
-            ),
+    final appBar = AppBar(
+      titleSpacing: NawahSpacing.s4,
+      title: Row(
+        children: [
+          const NawahLogo(height: 24, color: NawahColors.ink),
+          const SizedBox(width: NawahSpacing.s3),
+          Flexible(
+            child: Text(title ?? items[index].label, overflow: TextOverflow.ellipsis),
+          ),
         ],
+      ),
+      actions: [
+        ...?actions,
+        _AccountButton(account: account, extended: false),
+        const SizedBox(width: NawahSpacing.s2),
+      ],
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(height: 1, thickness: 1, color: NawahColors.border),
+      ),
+    );
+
+    if (items.length < 2) {
+      return Scaffold(appBar: appBar, body: child);
+    }
+
+    // الفهارس الأصلية للعناصر الظاهرة في الشريط، وللعناصر خلف «المزيد».
+    final all = List<int>.generate(items.length, (i) => i);
+    var pinned = all.where((i) => items[i].pinned).take(_maxPinned).toList();
+    if (pinned.isEmpty) pinned = all.take(_maxPinned).toList();
+    final overflow = all.where((i) => !pinned.contains(i)).toList();
+    // لا معنى لـ«المزيد» يحوي عنصراً واحداً — يظهر هو نفسه مكانه.
+    if (overflow.length == 1) {
+      pinned = [...pinned, overflow.single];
+      overflow.clear();
+    }
+
+    final inOverflow = overflow.contains(index);
+    final overflowBadge =
+        overflow.fold<int>(0, (sum, i) => sum + items[i].badgeCount);
+
+    return Scaffold(
+      appBar: appBar,
+      body: child,
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: NawahColors.border)),
+        ),
+        child: NavigationBar(
+          selectedIndex: inOverflow ? pinned.length : pinned.indexOf(index),
+          onDestinationSelected: (i) {
+            if (i < pinned.length) {
+              onSelect(pinned[i]);
+            } else {
+              _openMore(context, overflow);
+            }
+          },
+          destinations: [
+            for (final i in pinned)
+              NavigationDestination(
+                icon: _Badged(count: items[i].badgeCount, child: Icon(items[i].icon)),
+                selectedIcon: _Badged(
+                  count: items[i].badgeCount,
+                  child: Icon(items[i].selectedIcon),
+                ),
+                label: items[i].label,
+              ),
+            if (overflow.isNotEmpty)
+              NavigationDestination(
+                icon: _Badged(
+                  count: overflowBadge,
+                  child: Icon(inOverflow ? items[index].icon : Icons.menu),
+                ),
+                selectedIcon: _Badged(
+                  count: overflowBadge,
+                  child: Icon(items[index].selectedIcon),
+                ),
+                // حين يكون القسم المفتوح من «المزيد» يظهر اسمه هنا، فيعرف
+                // المستخدم أين هو دون النظر إلى العنوان.
+                label: inOverflow ? items[index].label : 'المزيد',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMore(BuildContext context, List<int> overflow) {
+    return showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      builder: (sheet) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: NawahSpacing.s3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final i in overflow)
+                ListTile(
+                  leading: _Badged(
+                    count: items[i].badgeCount,
+                    child: Icon(
+                      i == index ? items[i].selectedIcon : items[i].icon,
+                      color: NawahColors.ink,
+                    ),
+                  ),
+                  title: Text(
+                    items[i].label,
+                    style: TextStyle(
+                      fontWeight: i == index ? FontWeight.w700 : FontWeight.w500,
+                      color: NawahColors.ink,
+                    ),
+                  ),
+                  selected: i == index,
+                  selectedTileColor: NawahColors.inkTint,
+                  minTileHeight: 52,
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    onSelect(i);
+                  },
+                ),
+              const Divider(height: NawahSpacing.s5),
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: NawahColors.ink,
+                  child: Text(
+                    account.initial,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                title: Text(account.displayName),
+                subtitle: Text(account.roleLabel),
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout, color: NawahColors.err),
+                title: const Text(
+                  'تسجيل الخروج',
+                  style: TextStyle(color: NawahColors.err, fontWeight: FontWeight.w600),
+                ),
+                minTileHeight: 52,
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  account.onSignOut();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
-import '../../shared/adaptive.dart';
+import '../../shared/card_grid.dart';
+import '../../shared/sheets.dart';
 import '../cohorts/cohort.dart';
 import 'trainer.dart';
 import 'trainer_form.dart';
@@ -86,23 +87,7 @@ class _TrainersScreenState extends State<TrainersScreen> {
       rateHistory: rateHistory,
     );
 
-    if (context.isWide) {
-      await showDialog(
-        context: context,
-        builder: (_) => Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: form,
-          ),
-        ),
-      );
-    } else {
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => form,
-      );
-    }
+    await showAdaptiveSheet<void>(context, builder: (_) => form);
   }
 
   @override
@@ -129,17 +114,10 @@ class _TrainersScreenState extends State<TrainersScreen> {
         subtitle: 'اضغط زر الإضافة لإضافة أول مدرّب.',
       );
     } else {
-      final columns = adaptive(context, mobile: 1, tablet: 2, desktop: 3);
       body = RefreshIndicator(
         onRefresh: _load,
-        child: GridView.builder(
-          padding: const EdgeInsets.all(NawahSpacing.s4),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: NawahSpacing.s3,
-            crossAxisSpacing: NawahSpacing.s3,
-            mainAxisExtent: 150,
-          ),
+        child: CardGrid(
+          extent: 150,
           itemCount: _items.length,
           itemBuilder: (_, i) => _TrainerCard(
             trainer: _items[i],
@@ -202,7 +180,7 @@ class _TrainerCard extends StatelessWidget {
                         : Icons.person_off_outlined,
                     size: 16,
                     color: trainer.hasAccount
-                        ? NawahColors.green
+                        ? NawahColors.ok
                         : NawahColors.textMuted,
                   ),
                 ],
@@ -221,9 +199,9 @@ class _TrainerCard extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: NawahSpacing.s2),
-              Expanded(
-                child: Text(
-                  trainer.bio ?? '',
+              if ((trainer.bio ?? '').isNotEmpty) ...[
+                Text(
+                  trainer.bio!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -232,13 +210,14 @@ class _TrainerCard extends StatelessWidget {
                     height: 1.6,
                   ),
                 ),
-              ),
+                const SizedBox(height: NawahSpacing.s2),
+              ],
               Text(
                 trainer.hasAccount ? 'مرتبط بحساب دخول' : 'بلا حساب دخول',
                 style: TextStyle(
                   fontSize: 11,
                   color: trainer.hasAccount
-                      ? NawahColors.green
+                      ? NawahColors.ok
                       : NawahColors.textMuted,
                 ),
               ),

@@ -5,6 +5,7 @@ import '../../shared/adaptive.dart';
 import '../../shared/money.dart';
 import '../../shared/audit.dart';
 import '../../shared/months.dart';
+import '../../shared/sheets.dart';
 import 'billing_repository.dart';
 import 'student_due.dart';
 
@@ -60,18 +61,14 @@ class _StudentDuesScreenState extends State<StudentDuesScreen> {
   String get _monthLabel => arabicMonthLabel(_month);
 
   Future<void> _openDetail(StudentDueOverview item) async {
-    await showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: _StudentDueDetail(
-            item: item,
-            month: _month,
-            repo: _repo,
-            onChanged: _load,
-          ),
-        ),
+    await showAdaptiveSheet<void>(
+      context,
+      maxWidth: 460,
+      builder: (_) => _StudentDueDetail(
+        item: item,
+        month: _month,
+        repo: _repo,
+        onChanged: _load,
       ),
     );
   }
@@ -86,7 +83,8 @@ class _StudentDuesScreenState extends State<StudentDuesScreen> {
             children: [
               IconButton(
                 onPressed: () => _shiftMonth(-1),
-                icon: const Icon(Icons.chevron_right),
+                tooltip: 'الشهر السابق',
+                icon: const Icon(Icons.chevron_left),
               ),
               Expanded(
                 child: Text(
@@ -101,7 +99,8 @@ class _StudentDuesScreenState extends State<StudentDuesScreen> {
               ),
               IconButton(
                 onPressed: () => _shiftMonth(1),
-                icon: const Icon(Icons.chevron_left),
+                tooltip: 'الشهر التالي',
+                icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
@@ -122,8 +121,10 @@ class _StudentDuesScreenState extends State<StudentDuesScreen> {
               : _items.isEmpty
               ? const _Empty(
                   icon: Icons.groups_outlined,
-                  title: 'لا يوجد طلاب نشطون',
-                  subtitle: 'أضف طلاباً من شاشة الطلاب أولاً.',
+                  title: 'لا مستحقات لهذا الشهر',
+                  subtitle:
+                      'لا يوجد طالب نشط محتسَب في هذا الشهر — إمّا لا طلاب بعد، '
+                      'أو أن الشهر معطَّل لهم من نموذج الطالب (إجازة).',
                 )
               : RefreshIndicator(
                   onRefresh: _load,
@@ -156,13 +157,13 @@ class _DueRow extends StatelessWidget {
     final Color badgeColor;
     final String badgeLabel;
     if (item.isFullyPaid) {
-      badgeColor = NawahColors.green;
+      badgeColor = NawahColors.ok;
       badgeLabel = 'مسدَّد';
     } else if (item.isPartiallyPaid) {
-      badgeColor = NawahColors.accent;
+      badgeColor = NawahColors.accentInk;
       badgeLabel = 'جزئي';
     } else {
-      badgeColor = NawahColors.rose;
+      badgeColor = NawahColors.err;
       badgeLabel = 'غير مسدَّد';
     }
 
@@ -344,7 +345,13 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
   Widget build(BuildContext context) {
     final due = _item.due;
     return Padding(
-      padding: const EdgeInsets.all(NawahSpacing.s5),
+      // على الجوّال يُفتح لوحاً سفلياً: يرتفع فوق لوحة المفاتيح عند كتابة المبلغ.
+      padding: EdgeInsets.fromLTRB(
+        NawahSpacing.s5,
+        NawahSpacing.s5,
+        NawahSpacing.s5,
+        NawahSpacing.s5 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -470,7 +477,7 @@ class _StudentDueDetailState extends State<_StudentDueDetail> {
                 const Text(
                   'تم السداد بالكامل',
                   style: TextStyle(
-                    color: NawahColors.green,
+                    color: NawahColors.ok,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

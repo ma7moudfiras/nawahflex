@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/open_url.dart';
 import '../../shared/adaptive.dart';
+import '../../shared/sheets.dart';
 import '../attendance/attendance_repository.dart';
 import '../attendance/attendance_status.dart';
 import '../programs/program.dart';
@@ -29,6 +32,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
   Student? _selected;
   bool _activeOnly = true;
   bool _loading = true;
+  bool _loadedOnce = false;
   String? _error;
 
   @override
@@ -47,8 +51,16 @@ class _StudentsScreenState extends State<StudentsScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _search.dispose();
     super.dispose();
+  }
+
+  Timer? _debounce;
+  void _onSearchChanged(String _) {
+    setState(() {}); // إظهار/إخفاء زر المسح
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _load);
   }
 
   Future<void> _load() async {
@@ -65,6 +77,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       setState(() {
         _items = items;
         _loading = false;
+        _loadedOnce = true;
         if (_selected != null && !items.any((s) => s.id == _selected!.id)) {
           _selected = null;
         }
@@ -79,7 +92,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
   }
 
   Future<void> _openForm({Student? existing}) async {
-    final isWide = context.isWide;
     final initialProgramIds = existing == null
         ? <String>[]
         : await _repo.fetchProgramIds(existing.id);
@@ -92,39 +104,20 @@ class _StudentsScreenState extends State<StudentsScreen> {
       await _load();
     }
 
-    if (isWide) {
-      await showDialog(
-        context: context,
-        builder: (_) => Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: StudentForm(
-              initial: existing,
-              onSubmit: onSubmit,
-              allPrograms: _programs,
-              initialProgramIds: initialProgramIds,
-            ),
-          ),
-        ),
-      );
-    } else {
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => StudentForm(
-          initial: existing,
-          onSubmit: onSubmit,
-          allPrograms: _programs,
-          initialProgramIds: initialProgramIds,
-        ),
-      );
-    }
+    await showAdaptiveSheet<void>(
+      context,
+      builder: (_) => StudentForm(
+        initial: existing,
+        onSubmit: onSubmit,
+        allPrograms: _programs,
+        initialProgramIds: initialProgramIds,
+      ),
+    );
   }
 
   Future<void> _open(String url) async {
     if (url.isEmpty) return;
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await openExternal(url)) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('تعذّر فتح الرابط')));
@@ -134,7 +127,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _items.isEmpty) {
+    // دائرة التحميل تملأ الشاشة في التحميل الأول فقط — لو ظهرت أثناء البحث
+    // لاستبدلت حقل البحث نفسه وأغلقت لوحة المفاتيح بعد كل حرف.
+    if (_loading && !_loadedOnce) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -159,16 +154,26 @@ class _StudentsScreenState extends State<StudentsScreen> {
             NawahSpacing.s4,
             0,
           ),
+          // البحث يجري أثناء الكتابة (بعد توقّف قصير) — لا زر «بحث» ولا
+          // حاجة لضغط Enter على لوحة مفاتيح الجوّال.
           child: TextField(
             controller: _search,
+            onChanged: _onSearchChanged,
             onSubmitted: (_) => _load(),
+            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: 'ابحث بالاسم…',
               prefixIcon: const Icon(Icons.search, size: 20),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.arrow_forward, size: 18),
-                onPressed: _load,
-              ),
+              suffixIcon: _search.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'مسح البحث',
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () {
+                        _search.clear();
+                        _onSearchChanged('');
+                      },
+                    ),
               isDense: true,
             ),
           ),
@@ -203,15 +208,27 @@ class _StudentsScreenState extends State<StudentsScreen> {
         ),
         Expanded(
           child: _items.isEmpty
-              ? const _Empty(
-                  icon: Icons.groups_outlined,
-                  title: 'لا يوجد طلاب بعد',
-                  subtitle: 'اضغط زر الإضافة لتسجيل أول طالب.',
-                )
+              ? (_search.text.trim().isNotEmpty
+                  ? _Empty(
+                      icon: Icons.search_off,
+                      title: 'لا نتائج',
+                      subtitle: 'لا يوجد طالب باسم يحوي «${_search.text.trim()}».',
+                    )
+                  : const _Empty(
+                      icon: Icons.groups_outlined,
+                      title: 'لا يوجد طلاب بعد',
+                      subtitle: 'اضغط زر الإضافة لتسجيل أول طالب.',
+                    ))
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(NawahSpacing.s4),
+                    // المسافة السفلية تُبقي آخر طالب ظاهراً فوق زر الإضافة.
+                    padding: const EdgeInsets.fromLTRB(
+                      NawahSpacing.s4,
+                      NawahSpacing.s4,
+                      NawahSpacing.s4,
+                      96,
+                    ),
                     itemCount: _items.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: NawahSpacing.s2),
@@ -224,19 +241,35 @@ class _StudentsScreenState extends State<StudentsScreen> {
                           if (context.isWide) {
                             setState(() => _selected = s);
                           } else {
+                            var current = s;
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => Scaffold(
-                                  appBar: AppBar(
-                                    title: Text(s.fullName),
-                                    actions: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined),
-                                        onPressed: () => _openForm(existing: s),
-                                      ),
-                                    ],
+                                // الصفحة تُحدّث نفسها بعد التعديل — كانت تعرض
+                                // البيانات القديمة حتى يعود المستخدم ويفتحها.
+                                builder: (_) => StatefulBuilder(
+                                  builder: (ctx, setPage) => Scaffold(
+                                    // الاسم يظهر عنواناً كبيراً في الصفحة نفسها؛
+                                    // تكراره في الشريط يقصّه وبلا فائدة.
+                                    appBar: AppBar(
+                                      title: const Text('بيانات الطالب'),
+                                      actions: [
+                                        IconButton(
+                                          tooltip: 'تعديل',
+                                          icon: const Icon(Icons.edit_outlined),
+                                          onPressed: () async {
+                                            await _openForm(existing: current);
+                                            final fresh = _items.where(
+                                              (x) => x.id == current.id,
+                                            );
+                                            if (fresh.isNotEmpty) {
+                                              setPage(() => current = fresh.first);
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    body: _Detail(student: current, onOpen: _open),
                                   ),
-                                  body: _Detail(student: s, onOpen: _open),
                                 ),
                               ),
                             );
@@ -519,9 +552,6 @@ class _DetailState extends State<_Detail> {
                     onPressed: () => onOpen(student.whatsappUrl),
                     icon: const Icon(Icons.chat, size: 18),
                     label: const Text('واتساب'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF25D366),
-                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => onOpen('tel:${student.guardianPhone}'),

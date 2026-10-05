@@ -31,6 +31,19 @@ class Message {
     'spam': 'مزعجة',
   };
 
+  Message withStatus(String newStatus) => Message(
+        id: id,
+        name: name,
+        phone: phone,
+        body: body,
+        status: newStatus,
+        createdAt: createdAt,
+        email: email,
+        interest: interest,
+        notes: notes,
+        source: source,
+      );
+
   String get statusLabel => statusLabels[status] ?? status;
   bool get isNew => status == 'new';
 

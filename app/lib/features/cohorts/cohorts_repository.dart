@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import '../auth/profile.dart';
 import 'cohort.dart';
@@ -21,7 +22,7 @@ class CohortsRepository {
   }
 
   Future<void> update(String id, Cohort c) async {
-    await Db.client.from('cohorts').update(c.toInsertMap()).eq('id', id);
+    expectRows(await Db.client.from('cohorts').update(c.toInsertMap()).eq('id', id).select('id'));
   }
 
   /// حسابات المدرّبين — لقائمة اختيار مدرّب الفوج عند الإنشاء/التعديل.

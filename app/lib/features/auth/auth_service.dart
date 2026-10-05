@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import 'profile.dart';
 
@@ -40,18 +41,24 @@ class AuthService extends ChangeNotifier {
           .from('profiles')
           .select('id, full_name, role')
           .eq('id', Db.user!.id)
-          .maybeSingle();
+          .maybeSingle()
+          // طلب عالق (شبكة متقطّعة) كان يُبقي المستخدم أمام دائرة تحميل
+          // بلا نهاية؛ بعد المهلة تظهر رسالة واضحة وزر إعادة المحاولة.
+          .timeout(const Duration(seconds: 15));
 
       _profile = row == null ? null : Profile.fromMap(row);
       _error = null;
-    } catch (e) {
+    } catch (e, st) {
       _profile = null;
-      _error = 'تعذّر قراءة صلاحيتك: $e';
+      _error = 'تعذّر قراءة صلاحيتك. ${userMessageFor(e, st)}';
     } finally {
       _loading = false;
       notifyListeners();
     }
   }
+
+  /// إعادة قراءة الصلاحية — لزر «إعادة المحاولة» حين يتعذّر التحميل.
+  Future<void> retry() => _refresh();
 
   Future<String?> signIn(String email, String password) async {
     try {

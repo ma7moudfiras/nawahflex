@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import 'message.dart';
 
@@ -20,11 +21,11 @@ class MessagesRepository {
   }
 
   Future<void> setStatus(String id, String status) async {
-    await Db.client.from('messages').update({'status': status}).eq('id', id);
+    expectRows(await Db.client.from('messages').update({'status': status}).eq('id', id).select('id'));
   }
 
   Future<void> setNotes(String id, String notes) async {
-    await Db.client.from('messages').update({'notes': notes}).eq('id', id);
+    expectRows(await Db.client.from('messages').update({'notes': notes}).eq('id', id).select('id'));
   }
 
   /// عدّاد لكل حالة — يغذّي شارات التبويبات.

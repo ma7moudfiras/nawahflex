@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/errors.dart';
+import '../../shared/form_error.dart';
 import '../../core/config.dart';
 import 'program.dart';
 
@@ -25,6 +27,7 @@ class _ProgramFormState extends State<ProgramForm> {
   late final TextEditingController _price;
   late final TextEditingController _siblingPrice;
   bool _busy = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -48,7 +51,10 @@ class _ProgramFormState extends State<ProgramForm> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _saveError = null;
+    });
     try {
       await widget.onSubmit(Program(
         id: widget.initial?.id ?? '',
@@ -62,12 +68,8 @@ class _ProgramFormState extends State<ProgramForm> {
         siblingPrice: int.tryParse(_siblingPrice.text.trim()),
       ));
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذّر الحفظ — تأكّد من اتصالك وحاول مجدداً.')),
-        );
-      }
+    } catch (e, st) {
+      if (mounted) setState(() => _saveError = userMessageFor(e, st));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -143,7 +145,7 @@ class _ProgramFormState extends State<ProgramForm> {
                   return const Padding(
                     padding: EdgeInsets.only(top: NawahSpacing.s2),
                     child: Text('الحد الأعلى يجب أن يكون أكبر من أو يساوي الحد الأدنى',
-                        style: TextStyle(color: NawahColors.rose, fontSize: 12)),
+                        style: TextStyle(color: NawahColors.err, fontSize: 12)),
                   );
                 }
                 return const SizedBox.shrink();
@@ -183,13 +185,14 @@ class _ProgramFormState extends State<ProgramForm> {
                   return const Padding(
                     padding: EdgeInsets.only(top: NawahSpacing.s2),
                     child: Text('سعر خصم الإخوة يجب ألا يتجاوز السعر العادي',
-                        style: TextStyle(color: NawahColors.rose, fontSize: 12)),
+                        style: TextStyle(color: NawahColors.err, fontSize: 12)),
                   );
                 }
                 return const SizedBox.shrink();
               }),
 
               const SizedBox(height: NawahSpacing.s6),
+              FormErrorBanner(message: _saveError),
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy

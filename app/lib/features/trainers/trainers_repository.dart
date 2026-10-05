@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import '../auth/profile.dart';
 import '../cohorts/cohort.dart';
@@ -37,7 +38,7 @@ class TrainersRepository {
   }
 
   Future<void> update(String id, Trainer t) async {
-    await Db.client.from('trainers').update(t.toInsertMap()).eq('id', id);
+    expectRows(await Db.client.from('trainers').update(t.toInsertMap()).eq('id', id).select('id'));
   }
 
   /// حسابات دخول بصلاحية مدرّب متاحة للربط بسيرة — تستثني الحسابات
