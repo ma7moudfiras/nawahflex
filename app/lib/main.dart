@@ -11,6 +11,7 @@ import 'core/reload.dart';
 import 'core/supabase.dart';
 import 'features/attendance/attendance_screen.dart';
 import 'features/auth/auth_service.dart';
+import 'features/auth/change_password_dialog.dart';
 import 'features/auth/login_screen.dart';
 import 'features/billing/student_dues_screen.dart';
 import 'features/billing/trainer_payroll_screen.dart';
@@ -423,6 +424,7 @@ class _DashboardShellState extends State<DashboardShell> {
         roleLabel: p?.roleLabel ?? '',
         initial: p?.initial ?? '؟',
         onSignOut: widget.auth.signOut,
+        onChangePassword: showChangePasswordSheet,
       ),
       title: items[index].label,
       child: screens[index],

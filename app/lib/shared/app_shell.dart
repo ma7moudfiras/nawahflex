@@ -15,12 +15,16 @@ class AccountInfo {
     required this.roleLabel,
     required this.initial,
     required this.onSignOut,
+    this.onChangePassword,
   });
 
   final String displayName;
   final String roleLabel;
   final String initial;
   final VoidCallback onSignOut;
+
+  /// يفتح نموذج تغيير كلمة المرور؛ فارغ = لا يظهر الخيار (المعاينة والاختبار).
+  final void Function(BuildContext context)? onChangePassword;
 }
 
 /// الهيكل الذي يلفّ كل شاشات اللوحة.
@@ -278,6 +282,16 @@ class AppShell extends StatelessWidget {
                 title: Text(account.displayName),
                 subtitle: Text(account.roleLabel),
               ),
+              if (account.onChangePassword != null)
+                ListTile(
+                  leading: const Icon(Icons.lock_reset, color: NawahColors.ink),
+                  title: const Text('تغيير كلمة المرور'),
+                  minTileHeight: 52,
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    account.onChangePassword!(context);
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.logout, color: NawahColors.err),
                 title: const Text(
@@ -403,6 +417,7 @@ class _AccountButton extends StatelessWidget {
       tooltip: 'الحساب',
       onSelected: (v) {
         if (v == 'signout') account.onSignOut();
+        if (v == 'password') account.onChangePassword?.call(context);
       },
       itemBuilder: (_) => [
         PopupMenuItem(
@@ -414,6 +429,15 @@ class _AccountButton extends StatelessWidget {
           ),
         ),
         const PopupMenuDivider(),
+        if (account.onChangePassword != null)
+          const PopupMenuItem(
+            value: 'password',
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.lock_reset, size: 20),
+              title: Text('تغيير كلمة المرور'),
+            ),
+          ),
         const PopupMenuItem(
           value: 'signout',
           child: ListTile(
