@@ -1,6 +1,7 @@
 -- 0011 — تقسيم سياسات «for all» (أداء فقط، الصلاحيات لا تتغيّر). كل أمر في سطر واحد.
--- طبّقه على مشروع nawahflex: الصق الملف كاملاً في محرّر SQL فارغ، لا تظلّل شيئاً، ثم Run.
--- النجاح = جدول بأسماء الجداول، وعمود all_ صفر إلا في ٧ جداول مالية/خاصة.
+-- طُبِّق ٢٠٢٦-١٠-٠٥ من محرّر SQL (يحتاج DROP POLICY، فلم يمرّ عبر أداة Claude).
+-- تحقّق: rls_visibility متطابقة قبل/بعد لكل الأدوار، والكتابة (إدارة/مجهول) كما كانت،
+-- وتحذيرات multiple_permissive_policies: ٢٢ ← ٠.
 begin;
 drop policy if exists "achievements: admin write" on public.achievements;
 drop policy if exists "achievements: public read" on public.achievements;

@@ -15,8 +15,7 @@
 -- ٣. search_path فارغ لدالة المدرّب العامة.
 -- ٤. جدول client_errors.
 --
--- تقسيم سياسات «for all» (تحذيرات multiple_permissive_policies) مؤجَّل في
--- supabase/pending/split_for_all_policies.sql — يحتاج DROP POLICY.
+-- تقسيم سياسات «for all» (تحذيرات multiple_permissive_policies) في 0011.
 --
 -- طُبِّق على القاعدة على ثلاث دفعات (0010b/0010d/0010e) — المحتوى هنا مطابق.
 -- ============================================================================
