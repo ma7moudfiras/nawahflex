@@ -1,241 +1,112 @@
--- ============================================================================
--- 0011 — تقسيم سياسات «for all» (أداء فقط — الصلاحيات لا تتغيّر)
--- ----------------------------------------------------------------------------
--- طريقة التطبيق:
---   ١. لوحة Supabase ← مشروع nawahflex ← SQL Editor ← New query.
---   ٢. الصق هذا الملف كاملاً واضغط Run. سيطلب تأكيداً لأن فيه DROP — وافق.
---   ٣. آخر نتيجة تظهر: عدد السياسات لكل جدول. المتوقَّع: صفر سياسات «ALL»
---      إلا في الجداول المالية السبعة (admin only) التي لم يمسّها الملف.
---
--- كل الملف داخل begin/commit: إن فشل أي سطر لا يُطبَّق شيء إطلاقاً.
---
--- ماذا يفعل: سياسات «for all» للكتابة كانت تشمل SELECT أيضاً، فكان كل جدول
--- يقيّم سياستَي قراءة لكل صف. تُقسَّم هنا إلى insert/update/delete، وسياسة
--- القراءة الموجودة تشمل الإدارة أصلاً (or is_admin). وحيث وُجدت سياستان للفعل
--- نفسه دُمجتا بـ OR — والسياسات المتساهلة تُجمع بـ OR أصلاً، فالدمج مكافئ.
--- يُسكت ٢٢ تحذير multiple_permissive_policies.
--- ============================================================================
-
+-- 0011 — تقسيم سياسات «for all» (أداء فقط، الصلاحيات لا تتغيّر). كل أمر في سطر واحد.
+-- طبّقه على مشروع nawahflex: الصق الملف كاملاً في محرّر SQL فارغ، لا تظلّل شيئاً، ثم Run.
+-- النجاح = جدول بأسماء الجداول، وعمود all_ صفر إلا في ٧ جداول مالية/خاصة.
 begin;
-
--- ---------------------------------------------------------------------------
--- ٢-أ. المحتوى العام للموقع: قراءة عامة للمنشور، وكتابة للإدارة وحدها.
--- ---------------------------------------------------------------------------
 drop policy if exists "achievements: admin write" on public.achievements;
 drop policy if exists "achievements: public read" on public.achievements;
-create policy "achievements: public read" on public.achievements for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "achievements: public read" on public.achievements for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "achievements: admin insert" on public.achievements for insert to authenticated with check ((select private.is_admin()));
 create policy "achievements: admin update" on public.achievements for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "achievements: admin delete" on public.achievements for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "events: admin write" on public.events;
 drop policy if exists "events: public read" on public.events;
-create policy "events: public read" on public.events for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "events: public read" on public.events for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "events: admin insert" on public.events for insert to authenticated with check ((select private.is_admin()));
 create policy "events: admin update" on public.events for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "events: admin delete" on public.events for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "gallery: admin write" on public.gallery;
 drop policy if exists "gallery: public read" on public.gallery;
-create policy "gallery: public read" on public.gallery for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "gallery: public read" on public.gallery for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "gallery: admin insert" on public.gallery for insert to authenticated with check ((select private.is_admin()));
 create policy "gallery: admin update" on public.gallery for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "gallery: admin delete" on public.gallery for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "news: admin write" on public.news;
 drop policy if exists "news: public read" on public.news;
-create policy "news: public read" on public.news for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "news: public read" on public.news for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "news: admin insert" on public.news for insert to authenticated with check ((select private.is_admin()));
 create policy "news: admin update" on public.news for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "news: admin delete" on public.news for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "partners: admin write" on public.partners;
 drop policy if exists "partners: public read" on public.partners;
-create policy "partners: public read" on public.partners for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "partners: public read" on public.partners for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "partners: admin insert" on public.partners for insert to authenticated with check ((select private.is_admin()));
 create policy "partners: admin update" on public.partners for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "partners: admin delete" on public.partners for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "programs: admin write" on public.programs;
 drop policy if exists "programs: public read" on public.programs;
-create policy "programs: public read" on public.programs for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "programs: public read" on public.programs for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "programs: admin insert" on public.programs for insert to authenticated with check ((select private.is_admin()));
 create policy "programs: admin update" on public.programs for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "programs: admin delete" on public.programs for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "stats: admin write" on public.stats;
 drop policy if exists "stats: public read" on public.stats;
-create policy "stats: public read" on public.stats for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "stats: public read" on public.stats for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "stats: admin insert" on public.stats for insert to authenticated with check ((select private.is_admin()));
 create policy "stats: admin update" on public.stats for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "stats: admin delete" on public.stats for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "testimonials: admin write" on public.testimonials;
 drop policy if exists "testimonials: public read" on public.testimonials;
-create policy "testimonials: public read" on public.testimonials for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "testimonials: public read" on public.testimonials for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "testimonials: admin insert" on public.testimonials for insert to authenticated with check ((select private.is_admin()));
 create policy "testimonials: admin update" on public.testimonials for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "testimonials: admin delete" on public.testimonials for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "trainers: admin write" on public.trainers;
 drop policy if exists "trainers: public read" on public.trainers;
-create policy "trainers: public read" on public.trainers for select to anon, authenticated
-  using (is_published = true or (select private.is_admin()));
+create policy "trainers: public read" on public.trainers for select to anon, authenticated using (is_published = true or (select private.is_admin()));
 create policy "trainers: admin insert" on public.trainers for insert to authenticated with check ((select private.is_admin()));
 create policy "trainers: admin update" on public.trainers for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "trainers: admin delete" on public.trainers for delete to authenticated using ((select private.is_admin()));
-
-
--- ---------------------------------------------------------------------------
--- ٢-ب. جداول تشغيلية: قراءة للإدارة ولمدرّب الفوج، وكتابة للإدارة.
--- ---------------------------------------------------------------------------
-
--- students
 drop policy if exists "students: admin can write" on public.students;
 drop policy if exists "students: staff can read" on public.students;
-create policy "students: staff can read" on public.students for select to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.enrollments e join public.cohorts c on c.id = e.cohort_id
-    where e.student_id = students.id and c.trainer_id = (select auth.uid())));
-create policy "students: admin insert" on public.students for insert to authenticated
-  with check ((select private.is_admin()));
-create policy "students: admin update" on public.students for update to authenticated
-  using ((select private.is_admin())) with check ((select private.is_admin()));
-create policy "students: admin delete" on public.students for delete to authenticated
-  using ((select private.is_admin()));
-
--- student_programs
+create policy "students: staff can read" on public.students for select to authenticated using ((select private.is_admin()) or exists ( select 1 from public.enrollments e join public.cohorts c on c.id = e.cohort_id where e.student_id = students.id and c.trainer_id = (select auth.uid())));
+create policy "students: admin insert" on public.students for insert to authenticated with check ((select private.is_admin()));
+create policy "students: admin update" on public.students for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+create policy "students: admin delete" on public.students for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "student_programs: admin can write" on public.student_programs;
 drop policy if exists "student_programs: staff can read" on public.student_programs;
-create policy "student_programs: staff can read" on public.student_programs for select to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.enrollments e join public.cohorts c on c.id = e.cohort_id
-    where e.student_id = student_programs.student_id and c.trainer_id = (select auth.uid())));
-create policy "student_programs: admin insert" on public.student_programs for insert to authenticated
-  with check ((select private.is_admin()));
-create policy "student_programs: admin update" on public.student_programs for update to authenticated
-  using ((select private.is_admin())) with check ((select private.is_admin()));
-create policy "student_programs: admin delete" on public.student_programs for delete to authenticated
-  using ((select private.is_admin()));
-
--- cohorts
+create policy "student_programs: staff can read" on public.student_programs for select to authenticated using ((select private.is_admin()) or exists ( select 1 from public.enrollments e join public.cohorts c on c.id = e.cohort_id where e.student_id = student_programs.student_id and c.trainer_id = (select auth.uid())));
+create policy "student_programs: admin insert" on public.student_programs for insert to authenticated with check ((select private.is_admin()));
+create policy "student_programs: admin update" on public.student_programs for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+create policy "student_programs: admin delete" on public.student_programs for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "cohorts: admin can write" on public.cohorts;
 drop policy if exists "cohorts: staff can read" on public.cohorts;
-create policy "cohorts: staff can read" on public.cohorts for select to authenticated
-  using ((select private.is_admin()) or trainer_id = (select auth.uid())
-         or private.is_cohort_co_trainer(id));
-create policy "cohorts: admin insert" on public.cohorts for insert to authenticated
-  with check ((select private.is_admin()));
-create policy "cohorts: admin update" on public.cohorts for update to authenticated
-  using ((select private.is_admin())) with check ((select private.is_admin()));
-create policy "cohorts: admin delete" on public.cohorts for delete to authenticated
-  using ((select private.is_admin()));
-
--- enrollments — الإدراج: الإدارة، أو مدرّب الفوج ينقل طالباً من أفواجه (دُمجتا)
+create policy "cohorts: staff can read" on public.cohorts for select to authenticated using ((select private.is_admin()) or trainer_id = (select auth.uid()) or private.is_cohort_co_trainer(id));
+create policy "cohorts: admin insert" on public.cohorts for insert to authenticated with check ((select private.is_admin()));
+create policy "cohorts: admin update" on public.cohorts for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+create policy "cohorts: admin delete" on public.cohorts for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "enrollments: admin can write" on public.enrollments;
 drop policy if exists "enrollments: trainer can move own student" on public.enrollments;
 drop policy if exists "enrollments: staff can read" on public.enrollments;
-create policy "enrollments: staff can read" on public.enrollments for select to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = enrollments.cohort_id and c.trainer_id = (select auth.uid())));
-create policy "enrollments: insert" on public.enrollments for insert to authenticated
-  with check ((select private.is_admin()) or (
-    exists (select 1 from public.cohorts c
-            where c.id = enrollments.cohort_id and c.trainer_id = (select auth.uid()))
-    and private.student_enrolled_in_my_cohort(student_id)));
-create policy "enrollments: admin update" on public.enrollments for update to authenticated
-  using ((select private.is_admin())) with check ((select private.is_admin()));
-create policy "enrollments: admin delete" on public.enrollments for delete to authenticated
-  using ((select private.is_admin()));
-
--- attendance — الكتابة: الإدارة أو مدرّب الفوج (وعند الإدخال: الطالب ضمن الفوج)
+create policy "enrollments: staff can read" on public.enrollments for select to authenticated using ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = enrollments.cohort_id and c.trainer_id = (select auth.uid())));
+create policy "enrollments: insert" on public.enrollments for insert to authenticated with check ((select private.is_admin()) or ( exists (select 1 from public.cohorts c where c.id = enrollments.cohort_id and c.trainer_id = (select auth.uid())) and private.student_enrolled_in_my_cohort(student_id)));
+create policy "enrollments: admin update" on public.enrollments for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+create policy "enrollments: admin delete" on public.enrollments for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "attendance: trainer can mark" on public.attendance;
 drop policy if exists "attendance: staff can read" on public.attendance;
-create policy "attendance: staff can read" on public.attendance for select to authenticated
-  using ((select private.is_admin())
-         or exists (select 1 from public.cohorts c
-                    where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid()))
-         or private.is_session_co_trainer(session_id));
-create policy "attendance: trainer insert" on public.attendance for insert to authenticated
-  with check ((select private.is_admin()) or (
-    exists (select 1 from public.cohorts c
-            where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid()))
-    and exists (select 1 from public.enrollments e
-                where e.cohort_id = attendance.cohort_id and e.student_id = attendance.student_id)));
-create policy "attendance: trainer update" on public.attendance for update to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())))
-  with check ((select private.is_admin()) or (
-    exists (select 1 from public.cohorts c
-            where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid()))
-    and exists (select 1 from public.enrollments e
-                where e.cohort_id = attendance.cohort_id and e.student_id = attendance.student_id)));
-create policy "attendance: trainer delete" on public.attendance for delete to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())));
-
--- class_sessions
+create policy "attendance: staff can read" on public.attendance for select to authenticated using ((select private.is_admin()) or exists (select 1 from public.cohorts c where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())) or private.is_session_co_trainer(session_id));
+create policy "attendance: trainer insert" on public.attendance for insert to authenticated with check ((select private.is_admin()) or ( exists (select 1 from public.cohorts c where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())) and exists (select 1 from public.enrollments e where e.cohort_id = attendance.cohort_id and e.student_id = attendance.student_id)));
+create policy "attendance: trainer update" on public.attendance for update to authenticated using ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid()))) with check ((select private.is_admin()) or ( exists (select 1 from public.cohorts c where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())) and exists (select 1 from public.enrollments e where e.cohort_id = attendance.cohort_id and e.student_id = attendance.student_id)));
+create policy "attendance: trainer delete" on public.attendance for delete to authenticated using ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = attendance.cohort_id and c.trainer_id = (select auth.uid())));
 drop policy if exists "class_sessions: trainer logs own cohort" on public.class_sessions;
 drop policy if exists "class_sessions: staff can read" on public.class_sessions;
-create policy "class_sessions: staff can read" on public.class_sessions for select to authenticated
-  using ((select private.is_admin())
-         or exists (select 1 from public.cohorts c
-                    where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid()))
-         or private.is_session_co_trainer(id));
-create policy "class_sessions: trainer insert" on public.class_sessions for insert to authenticated
-  with check ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
-create policy "class_sessions: trainer update" on public.class_sessions for update to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())))
-  with check ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
-create policy "class_sessions: trainer delete" on public.class_sessions for delete to authenticated
-  using ((select private.is_admin()) or exists (
-    select 1 from public.cohorts c
-    where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
-
--- class_session_trainers
+create policy "class_sessions: staff can read" on public.class_sessions for select to authenticated using ((select private.is_admin()) or exists (select 1 from public.cohorts c where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())) or private.is_session_co_trainer(id));
+create policy "class_sessions: trainer insert" on public.class_sessions for insert to authenticated with check ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
+create policy "class_sessions: trainer update" on public.class_sessions for update to authenticated using ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid()))) with check ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
+create policy "class_sessions: trainer delete" on public.class_sessions for delete to authenticated using ((select private.is_admin()) or exists ( select 1 from public.cohorts c where c.id = class_sessions.cohort_id and c.trainer_id = (select auth.uid())));
 drop policy if exists "class_session_trainers: write" on public.class_session_trainers;
 drop policy if exists "class_session_trainers: read" on public.class_session_trainers;
-create policy "class_session_trainers: read" on public.class_session_trainers for select to authenticated
-  using ((select private.is_admin()) or trainer_id = (select auth.uid())
-         or private.class_session_cohort_owner(session_id));
-create policy "class_session_trainers: insert" on public.class_session_trainers for insert to authenticated
-  with check ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
-create policy "class_session_trainers: update" on public.class_session_trainers for update to authenticated
-  using ((select private.is_admin()) or private.class_session_cohort_owner(session_id))
-  with check ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
-create policy "class_session_trainers: delete" on public.class_session_trainers for delete to authenticated
-  using ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
-
--- trainer_rate_history — المدرّب يقرأ سعره، والإدارة تقرأ وتكتب الكل
+create policy "class_session_trainers: read" on public.class_session_trainers for select to authenticated using ((select private.is_admin()) or trainer_id = (select auth.uid()) or private.class_session_cohort_owner(session_id));
+create policy "class_session_trainers: insert" on public.class_session_trainers for insert to authenticated with check ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
+create policy "class_session_trainers: update" on public.class_session_trainers for update to authenticated using ((select private.is_admin()) or private.class_session_cohort_owner(session_id)) with check ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
+create policy "class_session_trainers: delete" on public.class_session_trainers for delete to authenticated using ((select private.is_admin()) or private.class_session_cohort_owner(session_id));
 drop policy if exists "trainer_rate_history: admin write" on public.trainer_rate_history;
 drop policy if exists "trainer_rate_history: trainer reads own" on public.trainer_rate_history;
-create policy "trainer_rate_history: read" on public.trainer_rate_history for select to authenticated
-  using ((select private.is_admin()) or profile_id = (select auth.uid()));
-create policy "trainer_rate_history: admin insert" on public.trainer_rate_history for insert to authenticated
-  with check ((select private.is_admin()));
-create policy "trainer_rate_history: admin update" on public.trainer_rate_history for update to authenticated
-  using ((select private.is_admin())) with check ((select private.is_admin()));
-create policy "trainer_rate_history: admin delete" on public.trainer_rate_history for delete to authenticated
-  using ((select private.is_admin()));
-
--- guardian_students — سياسة القراءة فقط تحتاج (select auth.uid())
+create policy "trainer_rate_history: read" on public.trainer_rate_history for select to authenticated using ((select private.is_admin()) or profile_id = (select auth.uid()));
+create policy "trainer_rate_history: admin insert" on public.trainer_rate_history for insert to authenticated with check ((select private.is_admin()));
+create policy "trainer_rate_history: admin update" on public.trainer_rate_history for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
+create policy "trainer_rate_history: admin delete" on public.trainer_rate_history for delete to authenticated using ((select private.is_admin()));
 drop policy if exists "guardian_students: own links" on public.guardian_students;
-create policy "guardian_students: own links" on public.guardian_students for select to authenticated
-  using ((select private.is_admin()) or guardian_id = (select auth.uid()));
-
-
--- ---------------------------------------------------------------------------
--- ٢-ج. الرسائل والمشتركون: الإدراج للجميع (نموذج الموقع)، والباقي للإدارة.
--- ---------------------------------------------------------------------------
+create policy "guardian_students: own links" on public.guardian_students for select to authenticated using ((select private.is_admin()) or guardian_id = (select auth.uid()));
 drop policy if exists "messages: admin can read" on public.messages;
 create policy "messages: admin read" on public.messages for select to authenticated using ((select private.is_admin()));
 create policy "messages: admin update" on public.messages for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
@@ -244,35 +115,12 @@ drop policy if exists "subscribers: admin can read" on public.subscribers;
 create policy "subscribers: admin read" on public.subscribers for select to authenticated using ((select private.is_admin()));
 create policy "subscribers: admin update" on public.subscribers for update to authenticated using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy "subscribers: admin delete" on public.subscribers for delete to authenticated using ((select private.is_admin()));
--- «anyone can insert» (with check true) تبقى كما هي وتشمل الإدارة.
-
-
--- ---------------------------------------------------------------------------
--- ٢-د. الملفات الشخصية: كلٌّ يقرأ ويعدّل ملفه (دون تغيير دوره)، والإدارة الكل.
--- ---------------------------------------------------------------------------
 drop policy if exists "profiles: admin all" on public.profiles;
 drop policy if exists "profiles: read own" on public.profiles;
 drop policy if exists "profiles: update own" on public.profiles;
-create policy "profiles: read" on public.profiles for select to authenticated
-  using ((select private.is_admin()) or id = (select auth.uid()));
-create policy "profiles: update" on public.profiles for update to authenticated
-  using ((select private.is_admin()) or id = (select auth.uid()))
-  with check ((select private.is_admin()) or (
-    id = (select auth.uid())
-    and role = (select p.role from public.profiles p where p.id = (select auth.uid()))));
-create policy "profiles: admin insert" on public.profiles for insert to authenticated
-  with check ((select private.is_admin()));
-create policy "profiles: admin delete" on public.profiles for delete to authenticated
-  using ((select private.is_admin()));
-
+create policy "profiles: read" on public.profiles for select to authenticated using ((select private.is_admin()) or id = (select auth.uid()));
+create policy "profiles: update" on public.profiles for update to authenticated using ((select private.is_admin()) or id = (select auth.uid())) with check ((select private.is_admin()) or ( id = (select auth.uid()) and role = (select p.role from public.profiles p where p.id = (select auth.uid()))));
+create policy "profiles: admin insert" on public.profiles for insert to authenticated with check ((select private.is_admin()));
+create policy "profiles: admin delete" on public.profiles for delete to authenticated using ((select private.is_admin()));
 commit;
-
--- التحقّق: عدد السياسات لكل جدول ونوعها
-select tablename,
-       count(*) filter (where cmd = 'ALL')    as all_,
-       count(*) filter (where cmd = 'SELECT') as sel,
-       count(*) filter (where cmd = 'INSERT') as ins,
-       count(*) filter (where cmd = 'UPDATE') as upd,
-       count(*) filter (where cmd = 'DELETE') as del
-from pg_policies where schemaname = 'public'
-group by tablename order by all_ desc, tablename;
+select tablename, count(*) filter (where cmd = 'ALL')    as all_, count(*) filter (where cmd = 'SELECT') as sel, count(*) filter (where cmd = 'INSERT') as ins, count(*) filter (where cmd = 'UPDATE') as upd, count(*) filter (where cmd = 'DELETE') as del from pg_policies where schemaname = 'public' group by tablename order by all_ desc, tablename;
