@@ -285,7 +285,8 @@ flutter build web --release --base-href /app/ --no-web-resources-cdn
 (الرابط، عنصر التنقّل، `visibleTo`، الشاشة). قسم جديد = عنصر في `allSections` فقط.
 `redirect.dart` يقرّر التحويل (دخول ← يحفظ `from`، دور بلا أقسام ← `/blocked`،
 قسم لا يملكه ← رئيسية دوره) ومختبَر في `test/redirect_test.dart`. التنقّل بـ
-`context.go('/slug')` لا بفهرس. وفي Chromium داخل جلسات Claude مرّر `locale` للسياق:
+`context.go('/slug')` لا بفهرس. إعادة توجيه `/app/*` في `vercel.json` وجهتها `/app`
+لا `/app/index.html`: مع `cleanUrls` ملف ‎.html غير قابل للعنونة فتنتهي بـ404. وفي Chromium داخل جلسات Claude مرّر `locale` للسياق:
 بدونه يبلّغ المتصفح `en-US@posix` فيرمي Intl ولا ترسم اللوحة (لا يحدث في متصفح حقيقي).
 
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
