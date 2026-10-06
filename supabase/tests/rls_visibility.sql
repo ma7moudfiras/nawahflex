@@ -5,8 +5,11 @@
 -- الـ migration واحفظ الناتج، ثم شغّله بعدها. أي اختلاف في عدد = تغيّر في
 -- الصلاحيات، وليس «تحسين أداء». تعديل أداء صحيح يُبقي الجدول متطابقاً حرفياً.
 --
--- المستخدمون يُختارون تلقائياً: أول حساب لكل دور (admin, trainer, viewer)
+-- المستخدمون يُختارون تلقائياً: أول حساب لكل دور (admin, trainer, parent, viewer)
 -- ومعهم الزائر المجهول (anon). لا يُعدَّل أي صف — قراءة فقط.
+--
+-- ⚠️ لا `truncate` هنا لو شغّلته عبر أداة Supabase في جلسة Claude: تعدّه هادماً
+--    فتنتظر تأكيداً حتى المهلة. افتح جلسة جديدة بدل تفريغ الجدول المؤقّت.
 -- ============================================================================
 create temp table if not exists _rls_vis (who text, tbl text, n bigint);
 truncate _rls_vis;
@@ -55,5 +58,6 @@ select tbl,
        max(n) filter (where who = 'anon')    as anon,
        max(n) filter (where who = 'viewer')  as viewer,
        max(n) filter (where who = 'trainer') as trainer,
+       max(n) filter (where who = 'parent')  as parent,
        max(n) filter (where who = 'admin')   as admin
 from _rls_vis group by tbl order by tbl;
