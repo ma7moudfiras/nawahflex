@@ -38,6 +38,8 @@ dependencies:
   go_router: ^18.0.0
   flutter_localizations:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   characters: ^1.4.1
   url_launcher: ^6.3.2
   web: ^1.1.1

@@ -71,6 +71,12 @@
       ]
     }
   ],
+  "rewrites": [
+    {
+      "source": "/app/:path*",
+      "destination": "/app/index.html"
+    }
+  ],
   "buildCommand": "bash scripts/build.sh",
   "installCommand": "echo 'لا اعتماديات npm — الموقع HTML/CSS/JS خالص'"
 }

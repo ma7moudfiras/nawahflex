@@ -28,6 +28,7 @@ class Profile {
     'admin': 'مدير',
     'editor': 'محرّر',
     'trainer': 'مدرّب',
+    'parent': 'ولي أمر',
     'viewer': 'مشاهد',
   };
 
