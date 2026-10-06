@@ -271,6 +271,13 @@ flutter build web --release --base-href /app/ --no-web-resources-cdn
 - `web/index.html`: `status-bar-style = default` (لا black ولا black-translucent —
   يزيحان المحتوى واللمس على الآيفون)، و`@font-face` لنفس خطوط Flutter — عند
   إضافة وزن/خط في `pubspec.yaml` أضفه هناك أيضاً، وإلا انزاح تحديد النص على iOS.
+- **`order('col', ascending: true)` صراحةً** — `order()` في supabase-dart تنازلي
+  افتراضياً، فتظهر القوائم مقلوبة الأبجدية بصمت.
+- **الألواح على الموجّه الجذري**: `showAdaptiveSheet` يفعل ذلك؛ أي `showModalBottomSheet`
+  مباشر يحتاج `useRootNavigator: true` وإلا بقي الشريط السفلي فعّالاً فوقه.
+- **التقدّم** (`features/progress/`): النقاط والمستوى من `student_progress()` في القاعدة
+  لا في التطبيق، والعتبات في جدول `levels`. الإطار `LevelFrame` (`brand/level_frame.dart`)
+  من هندسة الشعار — لا يُرسم المستوى بغيره.
 - `manifest.json`: `id`/`scope`/`start_url` = `/app/` صراحةً. تغيير المسار يكسر
   الأيقونات المضافة للشاشة الرئيسية — بلّغ المستخدمين بإعادة الإضافة.
 

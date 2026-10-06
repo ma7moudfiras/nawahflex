@@ -1,23 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../brand/tokens.dart';
-import '../../core/open_url.dart';
 import '../../shared/adaptive.dart';
 import '../../shared/sheets.dart';
-import '../attendance/attendance_repository.dart';
-import '../attendance/attendance_status.dart';
+import '../auth/profile.dart';
 import '../programs/program.dart';
 import '../programs/programs_repository.dart';
 import 'student.dart';
 import 'student_form.dart';
+import 'student_profile.dart';
 import 'students_repository.dart';
 
 /// شاشة الطلاب — نفس نمط شاشة الرسائل: قائمة+تفاصيل على العريض،
 /// قائمة فقط على الجوّال مع فتح التفاصيل كصفحة منفصلة.
 class StudentsScreen extends StatefulWidget {
-  const StudentsScreen({super.key});
+  const StudentsScreen({super.key, required this.viewer});
+
+  /// الحساب الحالي — يحدّد أزرار ملف الطالب (الصلاحية الحقيقية في RLS).
+  final Profile viewer;
 
   @override
   State<StudentsScreen> createState() => _StudentsScreenState();
@@ -113,16 +116,6 @@ class _StudentsScreenState extends State<StudentsScreen> {
         initialProgramIds: initialProgramIds,
       ),
     );
-  }
-
-  Future<void> _open(String url) async {
-    if (url.isEmpty) return;
-    if (!await openExternal(url)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('تعذّر فتح الرابط')));
-      }
-    }
   }
 
   @override
@@ -241,38 +234,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
                           if (context.isWide) {
                             setState(() => _selected = s);
                           } else {
-                            var current = s;
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                // الصفحة تُحدّث نفسها بعد التعديل — كانت تعرض
-                                // البيانات القديمة حتى يعود المستخدم ويفتحها.
-                                builder: (_) => StatefulBuilder(
-                                  builder: (ctx, setPage) => Scaffold(
-                                    // الاسم يظهر عنواناً كبيراً في الصفحة نفسها؛
-                                    // تكراره في الشريط يقصّه وبلا فائدة.
-                                    appBar: AppBar(
-                                      title: const Text('بيانات الطالب'),
-                                      actions: [
-                                        IconButton(
-                                          tooltip: 'تعديل',
-                                          icon: const Icon(Icons.edit_outlined),
-                                          onPressed: () async {
-                                            await _openForm(existing: current);
-                                            final fresh = _items.where(
-                                              (x) => x.id == current.id,
-                                            );
-                                            if (fresh.isNotEmpty) {
-                                              setPage(() => current = fresh.first);
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    body: _Detail(student: current, onOpen: _open),
-                                  ),
-                                ),
-                              ),
-                            );
+                            // صفحة برابطها (/students/:id) فوق القائمة: زر
+                            // الرجوع يعيد القائمة ببحثها، والرابط يُشارَك.
+                            context.push('/students/${s.id}');
                           }
                         },
                       );
@@ -304,10 +268,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
                         title: 'اختر طالباً',
                         subtitle: 'اضغط على أي طالب من القائمة لعرض بياناته.',
                       )
-                    : _Detail(
-                        student: _selected!,
-                        onOpen: _open,
-                        onEdit: () => _openForm(existing: _selected),
+                    : StudentProfileView(
+                        key: ValueKey(_selected!.id),
+                        studentId: _selected!.id,
+                        viewer: widget.viewer,
+                        embedded: true,
+                        onChanged: _load,
                       ),
               ),
             ],
@@ -413,262 +379,6 @@ class _StudentTile extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Detail extends StatefulWidget {
-  const _Detail({required this.student, required this.onOpen, this.onEdit});
-  final Student student;
-  final ValueChanged<String> onOpen;
-  final VoidCallback? onEdit;
-
-  @override
-  State<_Detail> createState() => _DetailState();
-}
-
-class _DetailState extends State<_Detail> {
-  final _attendanceRepo = const AttendanceRepository();
-  Map<String, int>? _attendanceCounts;
-
-  Student get student => widget.student;
-  ValueChanged<String> get onOpen => widget.onOpen;
-  VoidCallback? get onEdit => widget.onEdit;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAttendance();
-  }
-
-  @override
-  void didUpdateWidget(covariant _Detail oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.student.id != widget.student.id) _loadAttendance();
-  }
-
-  Future<void> _loadAttendance() async {
-    final targetId = widget.student.id;
-    setState(() => _attendanceCounts = null);
-    try {
-      final counts = await _attendanceRepo.fetchStudentAttendanceCounts(
-        targetId,
-      );
-      // تجاهل النتيجة إن انتقلت الشاشة لطالب آخر أثناء الجلب.
-      if (mounted && widget.student.id == targetId) {
-        setState(() => _attendanceCounts = counts);
-      }
-    } catch (e) {
-      if (mounted && widget.student.id == targetId) {
-        setState(() => _attendanceCounts = const {});
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(adaptive(context, mobile: 16.0, desktop: 32.0)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  student.fullName,
-                  style: const TextStyle(
-                    fontFamily: NawahFonts.display,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
-                    color: NawahColors.ink,
-                  ),
-                ),
-              ),
-              if (onEdit != null)
-                OutlinedButton.icon(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('تعديل'),
-                ),
-            ],
-          ),
-          if (student.age != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '${student.age} سنة${student.gender == 'm'
-                    ? ' · ذكر'
-                    : student.gender == 'f'
-                    ? ' · أنثى'
-                    : ''}',
-                style: const TextStyle(
-                  color: NawahColors.textMuted,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-
-          if (student.programTitles.isNotEmpty) ...[
-            const SizedBox(height: NawahSpacing.s3),
-            Wrap(
-              spacing: NawahSpacing.s2,
-              runSpacing: NawahSpacing.s2,
-              children: student.programTitles
-                  .map(
-                    (t) => Chip(
-                      label: Text(t, style: const TextStyle(fontSize: 12)),
-                      backgroundColor: NawahColors.primarySoft,
-                      side: BorderSide.none,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
-
-          const SizedBox(height: NawahSpacing.s5),
-          if (student.guardianName != null &&
-              student.guardianName!.isNotEmpty) ...[
-            const Text(
-              'ولي الأمر',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: NawahColors.ink,
-              ),
-            ),
-            const SizedBox(height: NawahSpacing.s2),
-            Text(
-              student.guardianName!,
-              style: const TextStyle(color: NawahColors.textSoft),
-            ),
-            const SizedBox(height: NawahSpacing.s4),
-            Wrap(
-              spacing: NawahSpacing.s2,
-              children: [
-                if (student.guardianPhone != null &&
-                    student.guardianPhone!.isNotEmpty) ...[
-                  FilledButton.icon(
-                    onPressed: () => onOpen(student.whatsappUrl),
-                    icon: const Icon(Icons.chat, size: 18),
-                    label: const Text('واتساب'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => onOpen('tel:${student.guardianPhone}'),
-                    icon: const Icon(Icons.phone, size: 18),
-                    label: Text(
-                      student.guardianPhone!,
-                      textDirection: TextDirection.ltr,
-                    ),
-                  ),
-                ],
-                if (student.guardianEmail != null &&
-                    student.guardianEmail!.isNotEmpty)
-                  OutlinedButton.icon(
-                    onPressed: () => onOpen('mailto:${student.guardianEmail}'),
-                    icon: const Icon(Icons.mail_outline, size: 18),
-                    label: Text(
-                      student.guardianEmail!,
-                      textDirection: TextDirection.ltr,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-
-          if (student.notes != null && student.notes!.isNotEmpty) ...[
-            const SizedBox(height: NawahSpacing.s5),
-            const Text(
-              'ملاحظات',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: NawahColors.ink,
-              ),
-            ),
-            const SizedBox(height: NawahSpacing.s2),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(NawahSpacing.s4),
-              decoration: BoxDecoration(
-                color: NawahColors.bgAlt,
-                borderRadius: BorderRadius.circular(NawahRadius.sm),
-              ),
-              child: Text(
-                student.notes!,
-                style: const TextStyle(color: NawahColors.text, height: 1.8),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: NawahSpacing.s5),
-          const Text(
-            'الحضور',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: NawahColors.ink,
-            ),
-          ),
-          const SizedBox(height: NawahSpacing.s2),
-          _AttendanceSummary(counts: _attendanceCounts),
-        ],
-      ),
-    );
-  }
-}
-
-class _AttendanceSummary extends StatelessWidget {
-  const _AttendanceSummary({required this.counts});
-  final Map<String, int>? counts;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = counts;
-    if (c == null) {
-      return const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    final total = c.values.fold(0, (a, b) => a + b);
-    if (total == 0) {
-      return const Text(
-        'لا يوجد سجلّ حضور بعد',
-        style: TextStyle(color: NawahColors.textMuted, fontSize: 13),
-      );
-    }
-    final present =
-        (c[AttendanceStatus.present] ?? 0) + (c[AttendanceStatus.late] ?? 0);
-    final rate = (present / total * 100).round();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$rate% نسبة الحضور ($present من $total حصة)',
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: NawahColors.ink,
-          ),
-        ),
-        const SizedBox(height: NawahSpacing.s2),
-        Wrap(
-          spacing: NawahSpacing.s2,
-          runSpacing: NawahSpacing.s2,
-          children: AttendanceStatus.all.where((s) => (c[s] ?? 0) > 0).map((s) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: NawahColors.bgAlt,
-                borderRadius: BorderRadius.circular(NawahRadius.full),
-              ),
-              child: Text(
-                '${AttendanceStatus.labels[s]}: ${c[s]}',
-                style: const TextStyle(fontSize: 11),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 }

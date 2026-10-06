@@ -17,7 +17,7 @@ class TrainerPayrollRepository {
         .from('profiles')
         .select('id, full_name')
         .eq('role', 'trainer')
-        .order('full_name');
+        .order('full_name', ascending: true);
     final list = <TrainerPayroll>[];
     for (final t in (trainers as List).cast<Map<String, dynamic>>()) {
       final id = t['id'] as String;

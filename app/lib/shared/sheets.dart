@@ -27,6 +27,9 @@ Future<T?> showAdaptiveSheet<T>(
   }
   return showModalBottomSheet<T>(
     context: context,
+    // فوق الهيكل كله لا داخل القسم: الأقسام داخل ShellRoute لها موجّهها،
+    // ولوح فيه كان يترك الشريط السفلي ظاهراً وقابلاً للنقر أثناء النموذج.
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     builder: builder,

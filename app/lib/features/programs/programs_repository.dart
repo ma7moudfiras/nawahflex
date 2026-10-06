@@ -9,7 +9,7 @@ class ProgramsRepository {
   static const _cols = 'id, title, text, age_min, age_max, is_published, created_at, price, sibling_price';
 
   Future<List<Program>> fetch() async {
-    final rows = await Db.client.from('programs').select(_cols).order('title');
+    final rows = await Db.client.from('programs').select(_cols).order('title', ascending: true);
     return (rows as List).map((r) => Program.fromMap(r as Map<String, dynamic>)).toList();
   }
 

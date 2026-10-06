@@ -14,8 +14,13 @@ class StudentsRepository {
     var q = Db.client.from('students').select(_cols);
     if (activeOnly) q = q.eq('is_active', true);
     if (query.trim().isNotEmpty) q = q.ilike('full_name', '%${query.trim()}%');
-    final rows = await q.order('full_name').limit(500);
+    final rows = await q.order('full_name', ascending: true).limit(500);
     return (rows as List).map((r) => Student.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  Future<Student?> fetchOne(String id) async {
+    final row = await Db.client.from('students').select(_cols).eq('id', id).maybeSingle();
+    return row == null ? null : Student.fromMap(row);
   }
 
   Future<String> create(Student s) async {

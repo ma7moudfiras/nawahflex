@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../brand/tokens.dart';
 import '../../core/supabase.dart';
@@ -194,6 +195,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
     } else {
       await showModalBottomSheet(
+        useRootNavigator: true,
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
@@ -996,12 +998,20 @@ class _RosterList extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      entry.fullName,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: NawahColors.ink,
+                    // الاسم يفتح ملف الطالب: منه يمنح المدرّب شارة أو يقيّم مهارة.
+                    child: InkWell(
+                      onTap: () => context.push('/students/${entry.studentId}'),
+                      borderRadius: BorderRadius.circular(NawahRadius.sm),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: NawahSpacing.s2),
+                        child: Text(
+                          entry.fullName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: NawahColors.ink,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1180,6 +1190,7 @@ class _MeetingDetailScreen extends StatelessWidget {
                 for (final entry in roster) ...[
                   ListTile(
                     title: Text(entry.fullName),
+                    onTap: () => context.push('/students/${entry.studentId}'),
                     trailing: Builder(
                       builder: (_) {
                         final status = statuses[entry.studentId];

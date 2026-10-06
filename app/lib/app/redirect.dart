@@ -46,5 +46,6 @@ String? portalRedirect({
 bool _allowed(String path, Profile p) {
   final segments = Uri(path: path).pathSegments;
   if (segments.isEmpty) return false;
-  return sectionsFor(p).any((s) => s.slug == segments.first);
+  if (sectionsFor(p).any((s) => s.slug == segments.first)) return true;
+  return detailRoutes.any((r) => r.matches(segments) && r.visibleTo(p));
 }

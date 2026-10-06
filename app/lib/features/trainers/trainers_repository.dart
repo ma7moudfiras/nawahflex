@@ -17,7 +17,7 @@ class TrainersRepository {
     final rows = await Db.client
         .from('trainers')
         .select(_cols)
-        .order('full_name');
+        .order('full_name', ascending: true);
     return (rows as List)
         .map((r) => Trainer.fromMap(r as Map<String, dynamic>))
         .toList();
@@ -51,7 +51,7 @@ class TrainersRepository {
         .from('profiles')
         .select('id, full_name, role')
         .eq('role', 'trainer')
-        .order('full_name');
+        .order('full_name', ascending: true);
     var linkedQuery = Db.client.from('trainers').select('profile_id');
     final linkedRows = excludingTrainerId == null
         ? await linkedQuery
@@ -121,7 +121,7 @@ class TrainersRepository {
           'id, name, program_id, trainer_id, schedule_label, starts_at, ends_at, capacity, is_active, created_at',
         )
         .eq('trainer_id', profileId)
-        .order('name');
+        .order('name', ascending: true);
     return (rows as List)
         .map((r) => Cohort.fromMap(r as Map<String, dynamic>))
         .toList();

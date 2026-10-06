@@ -8,6 +8,7 @@ import '../features/cohorts/cohorts_screen.dart';
 import '../features/dashboard/home_screen.dart';
 import '../features/messages/messages_screen.dart';
 import '../features/programs/programs_screen.dart';
+import '../features/students/student_profile.dart';
 import '../features/students/students_screen.dart';
 import '../features/trainers/trainers_screen.dart';
 import '../shared/nav_item.dart';
@@ -95,7 +96,7 @@ final List<Section> allSections = [
       selectedIcon: Icons.groups,
     ),
     visibleTo: _staff,
-    build: (_) => const StudentsScreen(),
+    build: (env) => StudentsScreen(viewer: env.profile),
   ),
   Section(
     slug: 'programs',
@@ -157,6 +158,33 @@ final List<Section> allSections = [
     ),
     visibleTo: _marksAttendance,
     build: (env) => AttendanceScreen(isAdmin: env.profile.canManage),
+  ),
+];
+
+/// صفحة تفصيل تحت قسم (`/students/:id`). لها صلاحيتها الخاصة: المدرّب لا
+/// يرى قسم الطلاب، لكنه يفتح ملف طالب من فوجه ليمنحه شارة أو يقيّم مهارة.
+class DetailRoute {
+  const DetailRoute({
+    required this.section,
+    required this.visibleTo,
+    required this.build,
+  });
+
+  final String section;
+  final bool Function(Profile p) visibleTo;
+  final Widget Function(SectionEnv env, String id) build;
+
+  String get path => '/$section/:id';
+
+  bool matches(List<String> segments) =>
+      segments.length == 2 && segments.first == section;
+}
+
+final List<DetailRoute> detailRoutes = [
+  DetailRoute(
+    section: 'students',
+    visibleTo: _marksAttendance,
+    build: (env, id) => StudentProfileView(studentId: id, viewer: env.profile),
   ),
 ];
 

@@ -45,10 +45,38 @@ GoRouter buildPortalRouter(AuthService auth, ValueNotifier<Map<String, int>> cou
                 child: _SectionPage(auth: auth, counts: counts, section: s),
               ),
             ),
+          for (final r in detailRoutes)
+            GoRoute(
+              path: r.path,
+              builder: (context, state) => _DetailPage(
+                auth: auth,
+                counts: counts,
+                route: r,
+                id: state.pathParameters['id']!,
+              ),
+            ),
         ],
       ),
     ],
   );
+}
+
+class _DetailPage extends StatelessWidget {
+  const _DetailPage({required this.auth, required this.counts, required this.route, required this.id});
+  final AuthService auth;
+  final ValueNotifier<Map<String, int>> counts;
+  final DetailRoute route;
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = auth.profile;
+    if (p == null) return const SizedBox.shrink();
+    return Material(
+      color: NawahColors.paper,
+      child: route.build(SectionEnv(profile: p, counts: counts, go: (slug) => context.go('/$slug')), id),
+    );
+  }
 }
 
 class _Loading extends StatelessWidget {

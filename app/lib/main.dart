@@ -26,6 +26,9 @@ Future<void> main() async {
   // روابط نظيفة (/app/students) لا (/app/#/students) — تُشارَك على واتساب
   // كما هي. vercel.json يعيد كل مسار تحت /app إلى index.html.
   usePathUrlStrategy();
+  // context.push (ملف طالب من القائمة) يغيّر الرابط أيضاً — فيُشارَك ويعمل
+  // زر الرجوع في المتصفح، مع بقاء القائمة وبحثها خلفه.
+  GoRouter.optionURLReflectsImperativeAPIs = true;
 
   // على الويب يعرض سفاري عدسته الخاصة فوق الحقل المخفي دائماً؛ عدسة Flutter
   // فوقها = عدستان، وتعلق عدسة Flutter أحياناً بعد رفع الإصبع. نتركها للمتصفح.

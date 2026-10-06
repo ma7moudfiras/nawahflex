@@ -61,7 +61,7 @@ class BillingRepository {
           'student_programs(programs(price, sibling_price))',
         )
         .eq('is_active', true)
-        .order('full_name');
+        .order('full_name', ascending: true);
 
     final overrides = await Db.client
         .from('student_billing_months')

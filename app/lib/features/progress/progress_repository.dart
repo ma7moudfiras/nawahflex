@@ -1,0 +1,145 @@
+import '../../core/errors.dart';
+import '../../core/supabase.dart';
+import 'progress_models.dart';
+
+/// قراءة وكتابة التقدّم. الصلاحية في RLS (0012): من يدرّس الطالب يكتب،
+/// ومن يدرّسه أو وليّه يقرأ. الواجهة لا تقرّر شيئاً هنا.
+class ProgressRepository {
+  const ProgressRepository();
+
+  /// النقاط والمستوى لعدّة طلاب في طلب واحد — الطالب الذي لا يملك السائل
+  /// رؤيته يغيب من النتيجة، فيُعرض بمستواه الأول.
+  Future<Map<String, StudentProgress>> fetchProgress(List<String> studentIds) async {
+    if (studentIds.isEmpty) return const {};
+    final rows = await Db.client.rpc('student_progress', params: {'p_student_ids': studentIds});
+    return {
+      for (final r in (rows as List).cast<Map<String, dynamic>>())
+        r['student_id'] as String: StudentProgress.fromMap(r),
+    };
+  }
+
+  Future<StudentProgress> fetchOne(String studentId) async =>
+      (await fetchProgress([studentId]))[studentId] ?? StudentProgress.empty(studentId);
+
+  /// المستويات وعتباتها (جدول levels) — لشرح الإطار والمستوى التالي.
+  Future<List<({int level, String title, int minPoints})>> fetchLevels() async {
+    final rows = await Db.client.from('levels').select('level, title, min_points').order('level', ascending: true);
+    return [
+      for (final r in (rows as List).cast<Map<String, dynamic>>())
+        (
+          level: (r['level'] as num).toInt(),
+          title: r['title'] as String,
+          minPoints: (r['min_points'] as num).toInt(),
+        ),
+    ];
+  }
+
+  // ---------- الشارات ----------
+
+  Future<List<BadgeDef>> fetchBadgeCatalog() async {
+    final rows = await Db.client
+        .from('badges')
+        .select('id, key, title, description, icon, points, program_id, is_active')
+        .order('sort_order', ascending: true)
+        .order('title', ascending: true);
+    return (rows as List).map((r) => BadgeDef.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<EarnedBadge>> fetchEarnedBadges(String studentId) async {
+    final rows = await Db.client
+        .from('student_badges')
+        .select('id, badge_id, awarded_by, note, awarded_at')
+        .eq('student_id', studentId)
+        .order('awarded_at', ascending: false);
+    return (rows as List).map((r) => EarnedBadge.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> awardBadge(String studentId, String badgeId, {String? note}) async {
+    await Db.client.from('student_badges').insert({
+      'student_id': studentId,
+      'badge_id': badgeId,
+      'awarded_by': Db.user!.id,
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+    });
+  }
+
+  Future<void> revokeBadge(String earnedId) async {
+    expectRows(await Db.client.from('student_badges').delete().eq('id', earnedId).select('id'));
+  }
+
+  // ---------- المهارات ----------
+
+  Future<List<Skill>> fetchSkills(List<String> programIds) async {
+    if (programIds.isEmpty) return const [];
+    final rows = await Db.client
+        .from('skills')
+        .select('id, program_id, title, description, sort_order')
+        .inFilter('program_id', programIds)
+        .order('sort_order', ascending: true)
+        .order('title', ascending: true);
+    return (rows as List).map((r) => Skill.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  /// درجة الطالب في كل مهارة: skill_id → ١..٤
+  Future<Map<String, int>> fetchSkillLevels(String studentId) async {
+    final rows = await Db.client
+        .from('student_skill_levels')
+        .select('skill_id, level')
+        .eq('student_id', studentId);
+    return {
+      for (final r in (rows as List).cast<Map<String, dynamic>>())
+        r['skill_id'] as String: (r['level'] as num).toInt(),
+    };
+  }
+
+  Future<void> setSkillLevel(String studentId, String skillId, int level) async {
+    expectRows(await Db.client.from('student_skill_levels').upsert({
+      'student_id': studentId,
+      'skill_id': skillId,
+      'level': level,
+      'updated_by': Db.user!.id,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    }).select('skill_id'));
+  }
+
+  Future<void> addSkill(String programId, String title, {int sortOrder = 0}) async {
+    await Db.client.from('skills').insert({
+      'program_id': programId,
+      'title': title.trim(),
+      'sort_order': sortOrder,
+    });
+  }
+
+  Future<void> renameSkill(String skillId, String title) async {
+    expectRows(await Db.client.from('skills').update({'title': title.trim()}).eq('id', skillId).select('id'));
+  }
+
+  Future<void> deleteSkill(String skillId) async {
+    expectRows(await Db.client.from('skills').delete().eq('id', skillId).select('id'));
+  }
+
+  // ---------- الملاحظات ----------
+
+  Future<List<StudentNote>> fetchNotes(String studentId, {int limit = 30}) async {
+    final rows = await Db.client
+        .from('student_notes')
+        .select('id, body, created_at, visible_to_guardian, author_id')
+        .eq('student_id', studentId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return (rows as List).map((r) => StudentNote.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> addNote(String studentId, String body, {required bool visibleToGuardian}) async {
+    await Db.client.from('student_notes').insert({
+      'student_id': studentId,
+      'body': body.trim(),
+      'visible_to_guardian': visibleToGuardian,
+      'author_id': Db.user!.id,
+    });
+  }
+
+  Future<void> deleteNote(String noteId) async {
+    expectRows(await Db.client.from('student_notes').delete().eq('id', noteId).select('id'));
+  }
+}

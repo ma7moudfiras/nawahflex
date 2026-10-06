@@ -49,6 +49,11 @@ void main() {
       expect(go('/students', p: trainer), '/sessions');
       expect(go('/nothing', p: admin), '/overview');
     });
+    test('المدرّب يفتح ملف طالب لكن لا قائمة الطلاب', () {
+      expect(go('/students/123', p: trainer), isNull);
+      expect(go('/students', p: trainer), '/sessions');
+      expect(go('/students/1/2', p: trainer), '/sessions');
+    });
     test('قسمه ومساراته الفرعية مسموحة', () {
       expect(go('/students', p: admin), isNull);
       expect(go('/students/123', p: admin), isNull);
