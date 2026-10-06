@@ -6,6 +6,7 @@ import '../features/billing/student_dues_screen.dart';
 import '../features/billing/trainer_payroll_screen.dart';
 import '../features/cohorts/cohorts_screen.dart';
 import '../features/dashboard/home_screen.dart';
+import '../features/guardian/kids_screen.dart';
 import '../features/messages/messages_screen.dart';
 import '../features/programs/programs_screen.dart';
 import '../features/students/student_profile.dart';
@@ -52,6 +53,7 @@ class Section {
 
 bool _staff(Profile p) => p.canManage;
 bool _marksAttendance(Profile p) => p.canManage || p.isTrainer;
+bool _parent(Profile p) => p.isParent;
 
 /// كل أقسام البوابة بترتيب ظهورها. الإدارة والمحرّر يرون اللوحة كاملة؛
 /// المدرّب يرى اللقاءات فقط — صلاحياته محصورة بحضور طلاب أفواجه (قرار
@@ -159,6 +161,18 @@ final List<Section> allSections = [
     visibleTo: _marksAttendance,
     build: (env) => AttendanceScreen(isAdmin: env.profile.canManage),
   ),
+  // بوابة ولي الأمر: قسم واحد، فلا شريط تنقّل (كالمدرّب).
+  Section(
+    slug: 'kids',
+    item: const NavItem(
+      label: 'أبنائي',
+      pinned: true,
+      icon: Icons.family_restroom_outlined,
+      selectedIcon: Icons.family_restroom,
+    ),
+    visibleTo: _parent,
+    build: (env) => KidsScreen(viewer: env.profile),
+  ),
 ];
 
 /// صفحة تفصيل تحت قسم (`/students/:id`). لها صلاحيتها الخاصة: المدرّب لا
@@ -184,6 +198,12 @@ final List<DetailRoute> detailRoutes = [
   DetailRoute(
     section: 'students',
     visibleTo: _marksAttendance,
+    build: (env, id) => StudentProfileView(studentId: id, viewer: env.profile),
+  ),
+  // ملف الابن لولي أمره — نفس الملف بوضع القراءة (يقرّره viewer.isParent).
+  DetailRoute(
+    section: 'kids',
+    visibleTo: _parent,
     build: (env, id) => StudentProfileView(studentId: id, viewer: env.profile),
   ),
 ];

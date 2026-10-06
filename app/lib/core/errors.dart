@@ -16,6 +16,15 @@ class WriteDenied implements Exception {
   String toString() => 'WriteDenied';
 }
 
+/// رفض مفهوم بلغة المستخدم (من الخادم أو التحقّق) — رسالته تُعرض كما هي
+/// ولا تُبلَّغ خللاً: جواب متوقَّع لا عطل.
+class UserFacingError implements Exception {
+  const UserFacingError(this.message);
+  final String message;
+  @override
+  String toString() => message;
+}
+
 /// يتحقّق أن الكتابة أصابت صفاً واحداً على الأقل. الاستعمال:
 ///   `expectRows(await q.update(v).eq('id', id).select('id'))`
 void expectRows(Object? rows) {
@@ -30,6 +39,8 @@ String userMessageFor(Object error, [StackTrace? stack]) {
   if (error is WriteDenied) {
     return 'لم يُحفظ التعديل: لا تملك صلاحيته، أو أن السجل لم يعد موجوداً.';
   }
+
+  if (error is UserFacingError) return error.message;
 
   ErrorReporter.reportIfEnabled(error, stack);
 

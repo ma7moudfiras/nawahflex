@@ -289,6 +289,14 @@ flutter build web --release --base-href /app/ --no-web-resources-cdn
 لا `/app/index.html`: مع `cleanUrls` ملف ‎.html غير قابل للعنونة فتنتهي بـ404. وفي Chromium داخل جلسات Claude مرّر `locale` للسياق:
 بدونه يبلّغ المتصفح `en-US@posix` فيرمي Intl ولا ترسم اللوحة (لا يحدث في متصفح حقيقي).
 
+**بوابة ولي الأمر** (`features/guardian/`): دور `parent` يرى قسم «أبنائي» وحده و`/kids/:id`
+(نفس `StudentProfileView` بوضع القراءة). القراءة عبر دوال 0013 فقط، والدعوة عبر Edge Function
+`supabase/functions/invite-guardian` (تحمل service_role على الخادم — لا في `app/` ولا `site/`):
+تولّد رابطاً يُرسل بواتساب، ولا تولّد رابطاً لحساب موظّف أبداً. **الإعداد المطلوب في Supabase:**
+Auth → URL Configuration → Redirect URLs يضمّ `https://www.nawahflex.org/app/**`، وإلا عاد الرابط
+إلى جذر الموقع وضاع الدخول. لتحديث الدالة: Supabase MCP `deploy_edge_function` (verify_jwt: true)،
+وتحقّق محلياً بـ `deno check`. حساب الاختبار `parent-test@nawah.test` (غير مربوط بأي طالب).
+
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
 والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي
 إلى تنقّل جانبي، وعند ١١٠٠px يتمدّد الشريط وتظهر شاشة الرسائل بعمودين.

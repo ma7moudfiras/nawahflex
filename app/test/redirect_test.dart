@@ -9,6 +9,7 @@ void main() {
   const admin = Profile(id: 'a', role: 'admin');
   const trainer = Profile(id: 't', role: 'trainer');
   const viewer = Profile(id: 'v', role: 'viewer');
+  const parent = Profile(id: 'p', role: 'parent');
 
   String? go(String url, {bool signedIn = true, bool loading = false, bool failed = false, Profile? p}) =>
       portalRedirect(
@@ -66,9 +67,30 @@ void main() {
     });
   });
 
+  group('ولي الأمر', () {
+    test('رئيسيته «أبنائي»', () {
+      expect(go('/login', p: parent), '/kids');
+      expect(go('/', p: parent), '/kids');
+    });
+    test('يفتح ملف ابنه برابطه المحفوظ', () {
+      expect(go('/login?from=%2Fkids%2Fabc', p: parent), '/kids/abc');
+      expect(go('/kids/abc', p: parent), isNull);
+    });
+    test('لا يصل إلى أقسام الموظفين ولا ملفات /students', () {
+      expect(go('/students/abc', p: parent), '/kids');
+      expect(go('/overview', p: parent), '/kids');
+      expect(go('/sessions', p: parent), '/kids');
+    });
+    test('الموظفون لا يرون قسم الأهل', () {
+      expect(go('/kids', p: admin), '/overview');
+      expect(go('/kids/abc', p: trainer), '/sessions');
+    });
+  });
+
   test('المدرّب يرى قسماً واحداً، والإدارة كل الأقسام', () {
     expect(sectionsFor(trainer).map((s) => s.slug), ['sessions']);
-    expect(sectionsFor(admin).length, allSections.length);
+    expect(sectionsFor(admin).length, allSections.length - 1); // كل شيء عدا «أبنائي»
+    expect(sectionsFor(parent).map((s) => s.slug), ['kids']);
   });
 
   test('روابط الأقسام فريدة', () {

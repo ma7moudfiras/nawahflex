@@ -17,6 +17,7 @@ class Profile {
   bool get canManage => role == 'admin' || role == 'editor';
   bool get isAdmin => role == 'admin';
   bool get isTrainer => role == 'trainer';
+  bool get isParent => role == 'parent';
 
   String get displayName =>
       (fullName == null || fullName!.trim().isEmpty) ? 'مستخدم' : fullName!.trim();

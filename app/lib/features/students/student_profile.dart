@@ -12,6 +12,8 @@ import '../../shared/sheets.dart';
 import '../attendance/attendance_repository.dart';
 import '../attendance/attendance_status.dart';
 import '../auth/profile.dart';
+import '../guardian/guardian_repository.dart';
+import '../guardian/guardian_sheets.dart';
 import '../programs/programs_repository.dart';
 import '../progress/progress_models.dart';
 import '../progress/progress_repository.dart';
@@ -35,6 +37,8 @@ class _ProfileData {
     required this.skills,
     required this.skillLevels,
     required this.notes,
+    this.dues,
+    this.guardians,
   });
 
   final Student student;
@@ -46,6 +50,12 @@ class _ProfileData {
   final List<Skill> skills;
   final Map<String, int> skillLevels;
   final List<StudentNote> notes;
+
+  /// مستحقات الابن — لولي الأمر وحده (child_dues).
+  final List<ChildDue>? dues;
+
+  /// أولياء الأمور المربوطون — للإدارة وحدها.
+  final List<LinkedGuardian>? guardians;
 
   String? levelTitle(int level) => levels.where((l) => l.level == level).firstOrNull?.title;
 }
@@ -79,6 +89,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   static const _students = StudentsRepository();
   static const _progress = ProgressRepository();
   static const _attendance = AttendanceRepository();
+  static const _guardian = GuardianRepository();
 
   _ProfileData? _data;
   String? _error;
@@ -86,6 +97,9 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 
   bool get _canTeach => widget.viewer.canManage || widget.viewer.isTrainer;
   bool get _canManage => widget.viewer.canManage;
+
+  /// ولي الأمر يرى ملف ابنه قراءةً: البيانات من دوال 0013 لا من الجداول.
+  bool get _asParent => widget.viewer.isParent;
 
   @override
   void initState() {
@@ -109,7 +123,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
       _missing = false;
     });
     try {
-      final student = await _students.fetchOne(id);
+      final student = _asParent ? await _guardian.fetchChild(id) : await _students.fetchOne(id);
       if (student == null) {
         if (mounted && widget.studentId == id) setState(() => _missing = true);
         return;
@@ -117,12 +131,14 @@ class _StudentProfileViewState extends State<StudentProfileView> {
       final r = await Future.wait<Object>([
         _progress.fetchOne(id),
         _progress.fetchLevels(),
-        _attendance.fetchStudentAttendanceCounts(id),
+        _asParent ? _guardian.fetchAttendanceCounts(id) : _attendance.fetchStudentAttendanceCounts(id),
         _progress.fetchBadgeCatalog(),
         _progress.fetchEarnedBadges(id),
         _progress.fetchSkills(student.programIds),
         _progress.fetchSkillLevels(id),
         _progress.fetchNotes(id),
+        if (_asParent) _guardian.fetchDues(id),
+        if (_canManage) _guardian.fetchGuardians(id),
       ]);
       if (!mounted || widget.studentId != id) return;
       setState(() => _data = _ProfileData(
@@ -135,6 +151,8 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             skills: r[5] as List<Skill>,
             skillLevels: r[6] as Map<String, int>,
             notes: r[7] as List<StudentNote>,
+            dues: _asParent ? r[8] as List<ChildDue> : null,
+            guardians: _canManage ? r[8] as List<LinkedGuardian> : null,
           ));
     } catch (e, st) {
       if (mounted && widget.studentId == id) setState(() => _error = userMessageFor(e, st));
@@ -249,7 +267,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (!widget.embedded) const _BackRow(),
+                    if (!widget.embedded) _BackRow(fallback: _asParent ? '/kids' : '/students'),
                     body,
                   ],
                 ),
@@ -277,6 +295,21 @@ class _StudentProfileViewState extends State<StudentProfileView> {
       child: _AttendanceSummary(counts: d.attendance),
     );
     final details = _DetailsCard(student: d.student, onOpen: _open, showInternal: _canTeach);
+    // العمود الجانبي: الحضور، ثم المستحقات (ولي الأمر) أو أولياء الأمور (الإدارة)، ثم البيانات.
+    final side = <Widget>[
+      attendance,
+      if (d.dues != null) DuesCard(dues: d.dues!),
+      if (d.guardians != null)
+        GuardiansCard(
+          student: d.student,
+          guardians: d.guardians!,
+          onChanged: _load,
+        ),
+      details,
+    ];
+    List<Widget> spaced(List<Widget> xs) => [
+          for (var i = 0; i < xs.length; i++) ...[if (i > 0) const SizedBox(height: NawahSpacing.s4), xs[i]],
+        ];
 
     return LayoutBuilder(
       builder: (context, box) {
@@ -284,7 +317,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         if (box.maxWidth < 860) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [hero, gap, stats, gap, badges, gap, skills, gap, notes, gap, attendance, gap, details],
+            children: [hero, gap, stats, gap, badges, gap, skills, gap, notes, gap, ...spaced(side)],
           );
         }
         return Column(
@@ -299,7 +332,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
               children: [
                 Expanded(flex: 3, child: Column(children: [badges, gap, skills, gap, notes])),
                 const SizedBox(width: NawahSpacing.s4),
-                Expanded(flex: 2, child: Column(children: [attendance, gap, details])),
+                Expanded(flex: 2, child: Column(children: spaced(side))),
               ],
             ),
           ],
@@ -397,7 +430,9 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           ? TextButton.icon(onPressed: () => _addNote(d), icon: const Icon(Icons.add, size: 18), label: const Text('ملاحظة'))
           : null,
       child: d.notes.isEmpty
-          ? const _Hint('لا ملاحظات بعد. الملاحظات المعلَّمة «يراها ولي الأمر» تظهر في بوابة الأهل.')
+          ? _Hint(_asParent
+              ? 'لا ملاحظات من المدرّب بعد.'
+              : 'لا ملاحظات بعد. الملاحظات المعلَّمة «يراها ولي الأمر» تظهر في بوابة الأهل.')
           : Column(
               children: [
                 for (final n in d.notes)
@@ -444,14 +479,17 @@ class _StudentProfileViewState extends State<StudentProfileView> {
 // ---------------------------------------------------------------------------
 
 class _BackRow extends StatelessWidget {
-  const _BackRow();
+  const _BackRow({required this.fallback});
+
+  /// الوجهة حين فُتح الملف مباشرة من رابط (لا صفحة قبله).
+  final String fallback;
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: AlignmentDirectional.centerStart,
       child: TextButton.icon(
-        onPressed: () => context.canPop() ? context.pop() : context.go('/students'),
+        onPressed: () => context.canPop() ? context.pop() : context.go(fallback),
         // Icons.arrow_back يتبع اتجاه النص: يشير يميناً في العربية.
         icon: const Icon(Icons.arrow_back, size: 18),
         label: const Text('رجوع'),

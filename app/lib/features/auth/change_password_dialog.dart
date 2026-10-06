@@ -52,7 +52,12 @@ class _ChangePasswordFormState extends State<_ChangePasswordForm> {
       _error = null;
     });
     try {
-      await Db.auth.updateUser(UserAttributes(password: _password.text));
+      // password_set: بوابة الأهل تُخفي تنبيه «اضبط كلمة مرور» بعدها — من
+      // دخل برابط دعوة لا كلمة مرور له حتى يضبطها هنا.
+      await Db.auth.updateUser(UserAttributes(
+        password: _password.text,
+        data: {'password_set': true},
+      ));
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
