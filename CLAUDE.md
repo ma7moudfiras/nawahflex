@@ -316,6 +316,18 @@ Auth → URL Configuration → Redirect URLs يضمّ `https://www.nawahflex.org
 تقرير الشهر: `MonthlyReport.build()` يجمع من بيانات الملف ولا يضمّ إلا ملاحظات «للأهل». معاينة الـ PDF بالعين:
 `PDF_OUT=<مجلد> flutter test test/pdf_test.dart` يحفظ الملفين.
 
+**الإشعارات** (`features/notifications/`, 0017): الإشعار يُنشئه **مُشغِّل في القاعدة** لا التطبيق (شارة، ملاحظة
+«للأهل»، غياب — ويُسحب إن صُحِّح —، شهادة، مشروع) لأولياء الطالب وللطالب حيث يناسب. جرس في الرأس لوليّ الأمر والطالب.
+Web Push: مُشغِّل `push_notification` ← pg_net ← Edge Function `send-push` (verify_jwt **false**، يحرسه سرّ
+`x-push-secret`)؛ مفاتيح VAPID والسرّ في **Supabase Vault** (`push_config()` لـ service_role وحده) — لا في git ولا
+في إعدادات الدالة. سجلّ الإرسال: `select * from net._http_response order by created desc`.
+- ⛔ **`web/flutter_bootstrap.js` بلا `serviceWorkerSettings`** — عامل Flutter المهجور يلغي تسجيل نطاق `/app/`
+  عند تفعيله، فيمسح `push-sw.js` واشتراكه في الزيارة التالية (مُثبَت بالتجربة). لا تُعِده.
+- تسجيل الخروج يحذف اشتراك الجهاز أولاً (`forgetThisDevice`) — لا تصل إشعارات مستخدم لمن بعده.
+- آيفون: Push بعد «إضافة إلى الشاشة الرئيسية» فقط (iOS 16.4+)؛ اللوح يقول ذلك. Chromium بلا واجهة يرجع
+  `Notification.permission = denied` دائماً — لا يُختبر الاشتراك فيه؛ يُختبر المسار من القاعدة باشتراك وهمي (404 ← يُحذف).
+- تدوير مفاتيح VAPID: `vault.update_secret` لكليهما، ثم يعيد كل جهاز التفعيل (الاشتراكات القديمة تُحذف بـ 410).
+
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
 والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي
 إلى تنقّل جانبي، وعند ١١٠٠px يتمدّد الشريط وتظهر شاشة الرسائل بعمودين.

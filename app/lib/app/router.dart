@@ -5,6 +5,8 @@ import '../brand/tokens.dart';
 import '../features/auth/auth_service.dart';
 import '../features/auth/change_password_dialog.dart';
 import '../features/auth/login_screen.dart';
+import '../features/notifications/notification_bell.dart';
+import '../features/notifications/notifications_repository.dart';
 import '../shared/app_shell.dart';
 import 'gate_screens.dart';
 import 'redirect.dart';
@@ -146,9 +148,22 @@ class _PortalShell extends StatelessWidget {
               displayName: p.displayName,
               roleLabel: p.roleLabel,
               initial: p.initial,
-              onSignOut: auth.signOut,
+              // اشتراك Push لهذا الجهاز يُحذف قبل الخروج — فلا تصل إشعارات
+              // هذا المستخدم لمن يدخل بعده على الجهاز نفسه.
+              onSignOut: () async {
+                await const NotificationsRepository().forgetThisDevice();
+                await auth.signOut();
+              },
               onChangePassword: showChangePasswordSheet,
             ),
+            actions: [
+              if (p.isParent || p.isStudent)
+                NotificationBell(
+                  isParent: p.isParent,
+                  isStudent: p.isStudent,
+                  onOpen: (path) => context.go(path),
+                ),
+            ],
             title: items[index].label,
             child: child,
           ),
