@@ -10,6 +10,7 @@ void main() {
   const trainer = Profile(id: 't', role: 'trainer');
   const viewer = Profile(id: 'v', role: 'viewer');
   const parent = Profile(id: 'p', role: 'parent');
+  const student = Profile(id: 's', role: 'student');
 
   String? go(String url, {bool signedIn = true, bool loading = false, bool failed = false, Profile? p}) =>
       portalRedirect(
@@ -87,9 +88,20 @@ void main() {
     });
   });
 
+  group('الطالب', () {
+    test('رئيسيته «ملفّي» ولا يصل لغيرها', () {
+      expect(go('/login', p: student), '/me');
+      expect(go('/me', p: student), isNull);
+      expect(go('/students/abc', p: student), '/me');
+      expect(go('/kids', p: student), '/me');
+      expect(go('/kids/abc', p: student), '/me');
+    });
+  });
+
   test('المدرّب يرى قسماً واحداً، والإدارة كل الأقسام', () {
     expect(sectionsFor(trainer).map((s) => s.slug), ['sessions']);
-    expect(sectionsFor(admin).length, allSections.length - 1); // كل شيء عدا «أبنائي»
+    expect(sectionsFor(admin).length, allSections.length - 2); // كل شيء عدا «أبنائي» و«ملفّي»
+    expect(sectionsFor(student).map((s) => s.slug), ['me']);
     expect(sectionsFor(parent).map((s) => s.slug), ['kids']);
   });
 

@@ -358,7 +358,7 @@ class _RailHeader extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                     )),
-                Text('لوحة الإدارة',
+                Text('البوابة',
                     style: TextStyle(color: NawahColors.invertSoft, fontSize: 11)),
               ],
             ),

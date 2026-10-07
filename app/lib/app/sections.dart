@@ -7,6 +7,7 @@ import '../features/billing/trainer_payroll_screen.dart';
 import '../features/cohorts/cohorts_screen.dart';
 import '../features/dashboard/home_screen.dart';
 import '../features/guardian/kids_screen.dart';
+import '../features/student/student_home_screen.dart';
 import '../features/messages/messages_screen.dart';
 import '../features/programs/programs_screen.dart';
 import '../features/students/student_profile.dart';
@@ -54,6 +55,7 @@ class Section {
 bool _staff(Profile p) => p.canManage;
 bool _marksAttendance(Profile p) => p.canManage || p.isTrainer;
 bool _parent(Profile p) => p.isParent;
+bool _student(Profile p) => p.isStudent;
 
 /// كل أقسام البوابة بترتيب ظهورها. الإدارة والمحرّر يرون اللوحة كاملة؛
 /// المدرّب يرى اللقاءات فقط — صلاحياته محصورة بحضور طلاب أفواجه (قرار
@@ -172,6 +174,18 @@ final List<Section> allSections = [
     ),
     visibleTo: _parent,
     build: (env) => KidsScreen(viewer: env.profile),
+  ),
+  // بوابة الطالب: قسم واحد «ملفّي».
+  Section(
+    slug: 'me',
+    item: const NavItem(
+      label: 'ملفّي',
+      pinned: true,
+      icon: Icons.person_outline,
+      selectedIcon: Icons.person,
+    ),
+    visibleTo: _student,
+    build: (env) => StudentHomeScreen(viewer: env.profile),
   ),
 ];
 

@@ -297,6 +297,12 @@ Auth → URL Configuration → Redirect URLs يضمّ `https://www.nawahflex.org
 إلى جذر الموقع وضاع الدخول. لتحديث الدالة: Supabase MCP `deploy_edge_function` (verify_jwt: true)،
 وتحقّق محلياً بـ `deno check`. حساب الاختبار `parent-test@nawah.test` (غير مربوط بأي طالب).
 
+**بوابة الطالب** (`features/student/`): دور `student` يرى «ملفّي» (`/me`) وحده — إطاره، نقاطه،
+شاراته المنالة والمقفلة، مهاراته؛ لا ملاحظات ولا مالية. الحساب يُنشأ من ملف الطالب (بطاقة «حساب الطالب»)
+عبر Edge Function `student-account`: اسم مستخدم ← `<username>@students.nawahflex.org`
+(`loginEmailFor()` في `features/auth/login_identifier.dart` يُلحق النطاق في شاشة الدخول). الدالة لا تلمس
+إلا حسابات دورها `student`. حساب الاختبار `test.student@students.nawahflex.org` غير مربوط بأي طالب.
+
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
 والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي
 إلى تنقّل جانبي، وعند ١١٠٠px يتمدّد الشريط وتظهر شاشة الرسائل بعمودين.

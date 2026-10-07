@@ -14,6 +14,8 @@ import '../attendance/attendance_status.dart';
 import '../auth/profile.dart';
 import '../guardian/guardian_repository.dart';
 import '../guardian/guardian_sheets.dart';
+import '../student/student_account_card.dart';
+import '../student/student_account_repository.dart';
 import '../programs/programs_repository.dart';
 import '../progress/progress_models.dart';
 import '../progress/progress_repository.dart';
@@ -39,6 +41,7 @@ class _ProfileData {
     required this.notes,
     this.dues,
     this.guardians,
+    this.username,
   });
 
   final Student student;
@@ -56,6 +59,9 @@ class _ProfileData {
 
   /// أولياء الأمور المربوطون — للإدارة وحدها.
   final List<LinkedGuardian>? guardians;
+
+  /// اسم مستخدم حساب الطالب ('' = لا حساب) — للإدارة وحدها؛ null لغيرها.
+  final String? username;
 
   String? levelTitle(int level) => levels.where((l) => l.level == level).firstOrNull?.title;
 }
@@ -139,6 +145,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         _progress.fetchNotes(id),
         if (_asParent) _guardian.fetchDues(id),
         if (_canManage) _guardian.fetchGuardians(id),
+        if (_canManage) const StudentAccountRepository().fetchUsername(id).then((u) => u ?? ''),
       ]);
       if (!mounted || widget.studentId != id) return;
       setState(() => _data = _ProfileData(
@@ -153,6 +160,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             notes: r[7] as List<StudentNote>,
             dues: _asParent ? r[8] as List<ChildDue> : null,
             guardians: _canManage ? r[8] as List<LinkedGuardian> : null,
+            username: _canManage ? r[9] as String : null,
           ));
     } catch (e, st) {
       if (mounted && widget.studentId == id) setState(() => _error = userMessageFor(e, st));
@@ -305,6 +313,8 @@ class _StudentProfileViewState extends State<StudentProfileView> {
           guardians: d.guardians!,
           onChanged: _load,
         ),
+      if (d.username != null)
+        StudentAccountCard(student: d.student, username: d.username!.isEmpty ? null : d.username),
       details,
     ];
     List<Widget> spaced(List<Widget> xs) => [
