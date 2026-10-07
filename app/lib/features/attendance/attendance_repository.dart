@@ -229,6 +229,25 @@ class AttendanceRepository {
 
   static String _dateOnly(DateTime d) => d.toIso8601String().split('T').first;
 
+  /// سجلّ حضور طالب في مدى تواريخ [from, to) — لتقرير الشهر.
+  Future<List<({DateTime date, String status})>> fetchStudentHistory(
+    String studentId, {
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final rows = await Db.client
+        .from('attendance')
+        .select('session_date, status')
+        .eq('student_id', studentId)
+        .gte('session_date', _dateOnly(from))
+        .lt('session_date', _dateOnly(to))
+        .order('session_date', ascending: true);
+    return [
+      for (final r in (rows as List).cast<Map<String, dynamic>>())
+        (date: DateTime.parse(r['session_date'] as String), status: r['status'] as String),
+    ];
+  }
+
   /// عدّاد كل حالة حضور لطالب معيّن عبر كل حصصه — لحساب نسبة الالتزام
   /// بتفاصيله (شاشة الطلاب).
   Future<Map<String, int>> fetchStudentAttendanceCounts(

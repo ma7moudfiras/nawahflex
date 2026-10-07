@@ -63,10 +63,27 @@ window.API = (function () {
     return res.json();
   }
 
+  /** استدعاء دالة قاعدة بيانات مكشوفة للزائر (مثل verify_certificate) */
+  async function rpc(fn, args = {}) {
+    if (!ready) throw new Error("SUPABASE_NOT_CONFIGURED");
+    const res = await fetchWithTimeout(`${cfg.SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": cfg.SUPABASE_KEY,
+        "Authorization": `Bearer ${cfg.SUPABASE_KEY}`
+      },
+      body: JSON.stringify(args)
+    });
+    if (!res.ok) throw new Error(`SUPABASE_${res.status}`);
+    return res.json();
+  }
+
   return {
     isReady: () => ready,
     insert,
     select,
+    rpc,
     sendMessage: (row) => insert("messages", row),
     subscribe:   (email) => insert("subscribers", { email })
   };

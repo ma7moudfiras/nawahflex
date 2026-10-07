@@ -81,6 +81,15 @@ class GuardianRepository {
     return counts;
   }
 
+  /// سجلّ الحضور بتواريخه (آخر ٢٠٠ حصة) — لتقرير الشهر.
+  Future<List<({DateTime date, String status})>> fetchAttendanceHistory(String studentId) async {
+    final rows = await Db.client.rpc('child_attendance', params: {'p_student_id': studentId});
+    return [
+      for (final r in (rows as List).cast<Map<String, dynamic>>())
+        (date: DateTime.parse(r['session_date'] as String), status: r['status'] as String),
+    ];
+  }
+
   Future<List<ChildDue>> fetchDues(String studentId) async {
     final rows = await Db.client.rpc('child_dues', params: {'p_student_id': studentId});
     return (rows as List).map((r) => ChildDue.fromMap(r as Map<String, dynamic>)).toList();

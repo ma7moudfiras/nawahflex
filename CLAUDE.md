@@ -70,6 +70,7 @@ nawahflex/
 ├─ site/                        ← الموقع (مجلد النشر على Vercel)
 │  ├─ index.html                البنية الكاملة + وسوم SEO + JSON-LD + أيقونات SVG
 │  ├─ 404.html                  صفحة الخطأ (مستقلة، بأنماطها الخاصة)
+│  ├─ verify.html               التحقّق من شهادة (`/verify?c=NW-…`، يفتحها رمز QR) — مستقلة و noindex
 │  ├─ css/
 │  │  ├─ tokens.css             ★ مصدر الحقيقة للألوان والخطوط والمسافات
 │  │  └─ style.css              كل الأنماط، مرتّبة بأقسام مرقّمة ١–٢٠
@@ -121,7 +122,7 @@ TLS قبل أول رسم، ويجعل شكل الموقع رهيناً بوصو�
 4. **لا تضف وزناً لا يستعمله `style.css` فعلاً** — تحقّق بـ
    `grep -ohE "font-weight: *[0-9]+" site/css/*.css`.
 5. `fonts.css` مخزَّن عند الزوّار سنة كاملة (vercel.json) — بعد تعديله ارفع رقم
-   `?v=` في رابطه داخل `index.html` و `404.html`، وإلا بقي الزائر العائد على القديم.
+   `?v=` في رابطه داخل `index.html` و `404.html` و `verify.html`، وإلا بقي الزائر العائد على القديم.
    أما باقي CSS/JS (وكل `/app`) فـ `no-cache`: المتصفح يتحقّق بـ ETag في كل زيارة
    فيأخذ الجديد فور النشر دون `?v=`. لا تجعلها immutable — مساراتها ثابتة ومحتواها
    يتغيّر، فيخلط الزائر ملفات من نسختين.
@@ -306,6 +307,14 @@ Auth → URL Configuration → Redirect URLs يضمّ `https://www.nawahflex.org
 **صور المشاريع** (`features/progress/projects_card.dart`): bucket خاص `student-projects`، المسار
 `<student_id>/<…>.jpg` إلزامي (السياسة ترفض غيره)، والعرض بـ `ProgressRepository.photoUrl()` (رابط موقّع
 مخزّن مؤقتاً). كل صورة تمرّ بـ `prepareImage()` (`core/image_prep.dart`) قبل الرفع — ترجع null لغير الصور.
+
+**الشهادات وتقرير الشهر** (`features/certificates/`, `features/reports/`): الشهادة صفّ في `certificates`
+برقم يولّده الخادم؛ الإصدار والإلغاء للإدارة، ولا حذف. الـ PDF يُولَّد على الجهاز (حزمة `pdf` — **لا `printing`**،
+فهي تحمّل pdf.js من CDN) ويُحفظ بـ `saveFile()` (`core/save_file.dart`). الخطوط والألوان والشعار SVG من
+`brand/pdf_brand.dart` — لا ألوان ولا شعار يدوي في ملفات PDF. **اسم الملف المحمَّل لاتيني** — كروميوم يرفض
+اسماً يخلط العربي باللاتيني. رمز QR ← `https://www.nawahflex.org/verify?c=CODE` ← `verify_certificate()` (anon).
+تقرير الشهر: `MonthlyReport.build()` يجمع من بيانات الملف ولا يضمّ إلا ملاحظات «للأهل». معاينة الـ PDF بالعين:
+`PDF_OUT=<مجلد> flutter test test/pdf_test.dart` يحفظ الملفين.
 
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
 والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي

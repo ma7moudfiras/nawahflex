@@ -12,6 +12,9 @@ import '../../shared/sheets.dart';
 import '../attendance/attendance_repository.dart';
 import '../attendance/attendance_status.dart';
 import '../auth/profile.dart';
+import '../certificates/certificate.dart';
+import '../certificates/certificates_card.dart';
+import '../certificates/certificates_repository.dart';
 import '../guardian/guardian_repository.dart';
 import '../guardian/guardian_sheets.dart';
 import '../student/student_account_card.dart';
@@ -21,6 +24,8 @@ import '../progress/progress_models.dart';
 import '../progress/progress_repository.dart';
 import '../progress/progress_sheets.dart';
 import '../progress/projects_card.dart';
+import '../reports/monthly_report.dart';
+import '../reports/report_sheet.dart';
 import 'student.dart';
 import 'student_form.dart';
 import 'students_repository.dart';
@@ -41,6 +46,7 @@ class _ProfileData {
     required this.skillLevels,
     required this.notes,
     required this.projects,
+    required this.certificates,
     this.dues,
     this.guardians,
     this.username,
@@ -56,6 +62,7 @@ class _ProfileData {
   final Map<String, int> skillLevels;
   final List<StudentNote> notes;
   final List<StudentProject> projects;
+  final List<Certificate> certificates;
 
   /// مستحقات الابن — لولي الأمر وحده (child_dues).
   final List<ChildDue>? dues;
@@ -147,6 +154,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         _progress.fetchSkillLevels(id),
         _progress.fetchNotes(id),
         _progress.fetchProjects(id),
+        const CertificatesRepository().fetchFor(id),
         if (_asParent) _guardian.fetchDues(id),
         if (_canManage) _guardian.fetchGuardians(id),
         if (_canManage) const StudentAccountRepository().fetchUsername(id).then((u) => u ?? ''),
@@ -163,9 +171,10 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             skillLevels: r[6] as Map<String, int>,
             notes: r[7] as List<StudentNote>,
             projects: r[8] as List<StudentProject>,
-            dues: _asParent ? r[9] as List<ChildDue> : null,
-            guardians: _canManage ? r[9] as List<LinkedGuardian> : null,
-            username: _canManage ? r[10] as String : null,
+            certificates: r[9] as List<Certificate>,
+            dues: _asParent ? r[10] as List<ChildDue> : null,
+            guardians: _canManage ? r[10] as List<LinkedGuardian> : null,
+            username: _canManage ? r[11] as String : null,
           ));
     } catch (e, st) {
       if (mounted && widget.studentId == id) setState(() => _error = userMessageFor(e, st));
@@ -195,6 +204,31 @@ class _StudentProfileViewState extends State<StudentProfileView> {
   Future<void> _setSkill(_ProfileData d, Skill s) async {
     final level = await showSkillLevelSheet(context, studentId: d.student.id, skill: s, current: d.skillLevels[s.id]);
     if (level != null) _load();
+  }
+
+  /// بيانات تقرير الشهر: الحضور بتواريخه من مصدر الدور، والباقي من الملف.
+  Future<MonthlyReport> _monthReport(_ProfileData d, DateTime month) async {
+    final id = d.student.id;
+    final from = DateTime(month.year, month.month);
+    final r = await Future.wait<Object>([
+      _asParent
+          ? _guardian.fetchAttendanceHistory(id)
+          : _attendance.fetchStudentHistory(id, from: from, to: DateTime(month.year, month.month + 1)),
+      // الملف يحمل آخر ٣٠ ملاحظة فقط؛ التقرير قد يكون لشهر أقدم.
+      _progress.fetchNotes(id, limit: 300),
+    ]);
+    return MonthlyReport.build(
+      month: from,
+      studentName: d.student.fullName,
+      progress: d.progress,
+      attendance: r[0] as List<AttendanceDay>,
+      catalog: d.catalog,
+      earned: d.earned,
+      projects: d.projects,
+      skills: d.skills,
+      skillLevels: d.skillLevels,
+      notes: r[1] as List<StudentNote>,
+    );
   }
 
   Future<void> _addNote(_ProfileData d) async {
@@ -311,7 +345,30 @@ class _StudentProfileViewState extends State<StudentProfileView> {
     final attendance = SectionCard(
       title: 'الحضور',
       icon: Icons.event_available_outlined,
+      action: _canTeach || _asParent
+          ? TextButton.icon(
+              onPressed: () => showMonthlyReportSheet(
+                context,
+                studentName: d.student.fullName,
+                build: (month) => _monthReport(d, month),
+              ),
+              icon: const Icon(Icons.summarize_outlined, size: 18),
+              label: const Text('تقرير الشهر'),
+            )
+          : null,
       child: _AttendanceSummary(counts: d.attendance),
+    );
+    final certificates = CertificatesCard(
+      studentId: d.student.id,
+      studentName: d.student.fullName,
+      certificates: d.certificates,
+      canIssue: _canManage,
+      programs: [
+        for (var i = 0; i < d.student.programIds.length && i < d.student.programTitles.length; i++)
+          (id: d.student.programIds[i], title: d.student.programTitles[i]),
+      ],
+      level: (level: d.progress.level, title: d.progress.levelTitle),
+      onChanged: _load,
     );
     final details = _DetailsCard(student: d.student, onOpen: _open, showInternal: _canTeach);
     // العمود الجانبي: الحضور، ثم المستحقات (ولي الأمر) أو أولياء الأمور (الإدارة)، ثم البيانات.
@@ -338,7 +395,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         if (box.maxWidth < 860) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [hero, gap, stats, gap, badges, gap, projects, gap, skills, gap, notes, gap, ...spaced(side)],
+            children: [hero, gap, stats, gap, badges, gap, certificates, gap, projects, gap, skills, gap, notes, gap, ...spaced(side)],
           );
         }
         return Column(
@@ -351,7 +408,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: Column(children: [badges, gap, projects, gap, skills, gap, notes])),
+                Expanded(flex: 3, child: Column(children: [badges, gap, certificates, gap, projects, gap, skills, gap, notes])),
                 const SizedBox(width: NawahSpacing.s4),
                 Expanded(flex: 2, child: Column(children: spaced(side))),
               ],
