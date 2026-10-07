@@ -193,3 +193,39 @@ class StudentNote {
         authorId: m['author_id'] as String?,
       );
 }
+
+/// مشروع بناه الطالب — صورة اختيارية في bucket «student-projects».
+class StudentProject {
+  const StudentProject({
+    required this.id,
+    required this.studentId,
+    required this.title,
+    required this.createdAt,
+    this.description,
+    this.photoPath,
+    this.rating,
+    this.createdBy,
+  });
+
+  final String id;
+  final String studentId;
+  final String title;
+  final String? description;
+  final String? photoPath;
+
+  /// تقييم المدرّب ١–٥، اختياري.
+  final int? rating;
+  final String? createdBy;
+  final DateTime createdAt;
+
+  factory StudentProject.fromMap(Map<String, dynamic> m) => StudentProject(
+        id: m['id'] as String,
+        studentId: m['student_id'] as String,
+        title: m['title'] as String,
+        description: m['description'] as String?,
+        photoPath: m['photo_path'] as String?,
+        rating: (m['rating'] as num?)?.toInt(),
+        createdBy: m['created_by'] as String?,
+        createdAt: DateTime.parse(m['created_at'] as String).toLocal(),
+      );
+}

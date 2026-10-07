@@ -20,6 +20,7 @@ import '../programs/programs_repository.dart';
 import '../progress/progress_models.dart';
 import '../progress/progress_repository.dart';
 import '../progress/progress_sheets.dart';
+import '../progress/projects_card.dart';
 import 'student.dart';
 import 'student_form.dart';
 import 'students_repository.dart';
@@ -39,6 +40,7 @@ class _ProfileData {
     required this.skills,
     required this.skillLevels,
     required this.notes,
+    required this.projects,
     this.dues,
     this.guardians,
     this.username,
@@ -53,6 +55,7 @@ class _ProfileData {
   final List<Skill> skills;
   final Map<String, int> skillLevels;
   final List<StudentNote> notes;
+  final List<StudentProject> projects;
 
   /// مستحقات الابن — لولي الأمر وحده (child_dues).
   final List<ChildDue>? dues;
@@ -143,6 +146,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         _progress.fetchSkills(student.programIds),
         _progress.fetchSkillLevels(id),
         _progress.fetchNotes(id),
+        _progress.fetchProjects(id),
         if (_asParent) _guardian.fetchDues(id),
         if (_canManage) _guardian.fetchGuardians(id),
         if (_canManage) const StudentAccountRepository().fetchUsername(id).then((u) => u ?? ''),
@@ -158,9 +162,10 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             skills: r[5] as List<Skill>,
             skillLevels: r[6] as Map<String, int>,
             notes: r[7] as List<StudentNote>,
-            dues: _asParent ? r[8] as List<ChildDue> : null,
-            guardians: _canManage ? r[8] as List<LinkedGuardian> : null,
-            username: _canManage ? r[9] as String : null,
+            projects: r[8] as List<StudentProject>,
+            dues: _asParent ? r[9] as List<ChildDue> : null,
+            guardians: _canManage ? r[9] as List<LinkedGuardian> : null,
+            username: _canManage ? r[10] as String : null,
           ));
     } catch (e, st) {
       if (mounted && widget.studentId == id) setState(() => _error = userMessageFor(e, st));
@@ -297,6 +302,12 @@ class _StudentProfileViewState extends State<StudentProfileView> {
     final badges = _badgesCard(d);
     final skills = _skillsCard(d);
     final notes = _notesCard(d);
+    final projects = ProjectsCard(
+      studentId: d.student.id,
+      projects: d.projects,
+      canEdit: _canTeach,
+      onChanged: _load,
+    );
     final attendance = SectionCard(
       title: 'الحضور',
       icon: Icons.event_available_outlined,
@@ -327,7 +338,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
         if (box.maxWidth < 860) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [hero, gap, stats, gap, badges, gap, skills, gap, notes, gap, ...spaced(side)],
+            children: [hero, gap, stats, gap, badges, gap, projects, gap, skills, gap, notes, gap, ...spaced(side)],
           );
         }
         return Column(
@@ -340,7 +351,7 @@ class _StudentProfileViewState extends State<StudentProfileView> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: Column(children: [badges, gap, skills, gap, notes])),
+                Expanded(flex: 3, child: Column(children: [badges, gap, projects, gap, skills, gap, notes])),
                 const SizedBox(width: NawahSpacing.s4),
                 Expanded(flex: 2, child: Column(children: spaced(side))),
               ],

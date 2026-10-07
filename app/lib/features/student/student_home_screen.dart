@@ -8,6 +8,7 @@ import '../auth/profile.dart';
 import '../progress/progress_models.dart';
 import '../progress/progress_repository.dart';
 import '../progress/progress_sheets.dart';
+import '../progress/projects_card.dart';
 import '../students/student.dart';
 import 'student_account_repository.dart';
 
@@ -24,7 +25,7 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _Data {
-  const _Data(this.me, this.progress, this.levels, this.catalog, this.earned, this.skills, this.skillLevels);
+  const _Data(this.me, this.progress, this.levels, this.catalog, this.earned, this.skills, this.skillLevels, this.projects);
   final Student me;
   final StudentProgress progress;
   final List<_Level> levels;
@@ -32,6 +33,7 @@ class _Data {
   final List<EarnedBadge> earned;
   final List<Skill> skills;
   final Map<String, int> skillLevels;
+  final List<StudentProject> projects;
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
@@ -63,6 +65,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         _progress.fetchEarnedBadges(me.id),
         _progress.fetchSkills(me.programIds),
         _progress.fetchSkillLevels(me.id),
+        _progress.fetchProjects(me.id),
       ]);
       if (!mounted) return;
       setState(() => _data = _Data(
@@ -73,6 +76,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             r[3] as List<EarnedBadge>,
             r[4] as List<Skill>,
             r[5] as Map<String, int>,
+            r[6] as List<StudentProject>,
           ));
     } catch (e, st) {
       if (mounted) setState(() => _error = userMessageFor(e, st));
@@ -225,6 +229,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     );
                   },
                 ),
+        ),
+        const SizedBox(height: NawahSpacing.s4),
+
+        ProjectsCard(
+          title: 'مشاريعي',
+          studentId: d.me.id,
+          projects: d.projects,
+          canEdit: false,
+          onChanged: _load,
         ),
         const SizedBox(height: NawahSpacing.s4),
 

@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
+
 import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import 'progress_models.dart';
@@ -141,5 +145,79 @@ class ProgressRepository {
 
   Future<void> deleteNote(String noteId) async {
     expectRows(await Db.client.from('student_notes').delete().eq('id', noteId).select('id'));
+  }
+
+  // ---------- المشاريع ----------
+
+  static const _bucket = 'student-projects';
+
+  /// روابط موقّعة مخزّنة مؤقتاً — كي لا يطلب كل إعادة رسم رابطاً جديداً.
+  static final Map<String, ({String url, DateTime until})> _signed = {};
+
+  Future<List<StudentProject>> fetchProjects(String studentId) async {
+    final rows = await Db.client
+        .from('student_projects')
+        .select('id, student_id, title, description, photo_path, rating, created_by, created_at')
+        .eq('student_id', studentId)
+        .order('created_at', ascending: false);
+    return (rows as List).map((r) => StudentProject.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
+  /// يرفع الصورة (مصغّرة مسبقاً بـ prepareImage) ثم يسجّل المشروع. إن فشل
+  /// التسجيل تُحذف الصورة كي لا يبقى ملف يتيم في التخزين.
+  Future<void> addProject({
+    required String studentId,
+    required String title,
+    String? description,
+    int? rating,
+    Uint8List? jpeg,
+  }) async {
+    String? path;
+    if (jpeg != null) {
+      path = '$studentId/${DateTime.now().microsecondsSinceEpoch}.jpg';
+      await Db.client.storage.from(_bucket).uploadBinary(
+            path,
+            jpeg,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+    }
+    try {
+      await Db.client.from('student_projects').insert({
+        'student_id': studentId,
+        'title': title.trim(),
+        if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
+        'rating': ?rating,
+        'photo_path': ?path,
+        'created_by': Db.user!.id,
+      });
+    } catch (_) {
+      if (path != null) await _removeQuietly(path);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteProject(StudentProject p) async {
+    expectRows(await Db.client.from('student_projects').delete().eq('id', p.id).select('id'));
+    if (p.photoPath != null) {
+      _signed.remove(p.photoPath);
+      // الصفّ حُذف؛ فشل حذف الملف لا يُفشل العملية (يبقى خاصاً غير مرئي).
+      await _removeQuietly(p.photoPath!);
+    }
+  }
+
+  /// حذف ملف لا يُفشل العملية الأصلية إن تعذّر — يبقى خاصاً لا يراه أحد.
+  Future<void> _removeQuietly(String path) async {
+    try {
+      await Db.client.storage.from(_bucket).remove([path]);
+    } catch (_) {}
+  }
+
+  /// رابط موقّع لساعة، يُجدَّد قبل انتهائه بخمس دقائق.
+  Future<String> photoUrl(String path) async {
+    final hit = _signed[path];
+    if (hit != null && hit.until.isAfter(DateTime.now())) return hit.url;
+    final url = await Db.client.storage.from(_bucket).createSignedUrl(path, 3600);
+    _signed[path] = (url: url, until: DateTime.now().add(const Duration(minutes: 55)));
+    return url;
   }
 }

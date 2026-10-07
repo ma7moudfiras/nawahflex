@@ -303,6 +303,10 @@ Auth → URL Configuration → Redirect URLs يضمّ `https://www.nawahflex.org
 (`loginEmailFor()` في `features/auth/login_identifier.dart` يُلحق النطاق في شاشة الدخول). الدالة لا تلمس
 إلا حسابات دورها `student`. حساب الاختبار `test.student@students.nawahflex.org` غير مربوط بأي طالب.
 
+**صور المشاريع** (`features/progress/projects_card.dart`): bucket خاص `student-projects`، المسار
+`<student_id>/<…>.jpg` إلزامي (السياسة ترفض غيره)، والعرض بـ `ProgressRepository.photoUrl()` (رابط موقّع
+مخزّن مؤقتاً). كل صورة تمرّ بـ `prepareImage()` (`core/image_prep.dart`) قبل الرفع — ترجع null لغير الصور.
+
 **التخطيط التكيّفي** (`lib/shared/adaptive.dart`): الإدارة تعمل على المكتب،
 والأهالي على الجوّال. تطبيق واحد يخدم الاثنين — عند ٧٢٠px ينتقل من شريط سفلي
 إلى تنقّل جانبي، وعند ١١٠٠px يتمدّد الشريط وتظهر شاشة الرسائل بعمودين.
