@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import '../auth/profile.dart';
 import 'cohort.dart';
@@ -11,7 +12,7 @@ class CohortsRepository {
       'capacity, is_active, created_at, programs(title), profiles(full_name), enrollments(count)';
 
   Future<List<Cohort>> fetch() async {
-    final rows = await Db.client.from('cohorts').select(_cols).order('name');
+    final rows = await Db.client.from('cohorts').select(_cols).order('name', ascending: true);
     return (rows as List).map((r) => Cohort.fromMap(r as Map<String, dynamic>)).toList();
   }
 
@@ -21,12 +22,12 @@ class CohortsRepository {
   }
 
   Future<void> update(String id, Cohort c) async {
-    await Db.client.from('cohorts').update(c.toInsertMap()).eq('id', id);
+    expectRows(await Db.client.from('cohorts').update(c.toInsertMap()).eq('id', id).select('id'));
   }
 
   /// حسابات المدرّبين — لقائمة اختيار مدرّب الفوج عند الإنشاء/التعديل.
   Future<List<Profile>> fetchTrainers() async {
-    final rows = await Db.client.from('profiles').select('id, full_name, role').eq('role', 'trainer').order('full_name');
+    final rows = await Db.client.from('profiles').select('id, full_name, role').eq('role', 'trainer').order('full_name', ascending: true);
     return (rows as List).map((r) => Profile.fromMap(r as Map<String, dynamic>)).toList();
   }
 

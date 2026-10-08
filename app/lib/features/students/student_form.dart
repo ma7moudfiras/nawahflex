@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/errors.dart';
+import '../../shared/form_error.dart';
 import '../../shared/months.dart';
 import '../billing/billing_repository.dart';
 import '../programs/program.dart';
@@ -42,6 +44,8 @@ class _StudentFormState extends State<StudentForm> {
   String? _gender;
   late Set<String> _selectedProgramIds;
   bool _busy = false;
+  String? _saveError;
+  String? _monthError;
 
   DateTime? _billingStartMonth;
   int _monthsYear = DateTime.now().year;
@@ -104,18 +108,19 @@ class _StudentFormState extends State<StudentForm> {
     final next = !current;
     final studentId = widget.initial!.id;
     final period = DateTime(_monthsYear, month);
-    setState(() => _monthOverrides = {..._monthOverrides, month: next});
+    setState(() {
+      _monthOverrides = {..._monthOverrides, month: next};
+      _monthError = null;
+    });
     try {
       if (next == _naturalEnrollment(month)) {
         await _billingRepo.clearMonthOverride(studentId, period);
       } else {
         await _billingRepo.setMonthOverride(studentId, period, next);
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذّر حفظ تعديل الشهر — حاول مجدداً.')),
-      );
+      setState(() => _monthError = 'تعذّر حفظ تعديل الشهر. ${userMessageFor(e, st)}');
       await _loadMonthOverrides();
     }
   }
@@ -162,7 +167,10 @@ class _StudentFormState extends State<StudentForm> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _saveError = null;
+    });
     try {
       await widget.onSubmit(
         Student(
@@ -181,14 +189,8 @@ class _StudentFormState extends State<StudentForm> {
         _selectedProgramIds.toList(),
       );
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تعذّر الحفظ — تأكّد من اتصالك وحاول مجدداً.'),
-          ),
-        );
-      }
+    } catch (e, st) {
+      if (mounted) setState(() => _saveError = userMessageFor(e, st));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -296,7 +298,7 @@ class _StudentFormState extends State<StudentForm> {
                   children: [
                     IconButton(
                       onPressed: () => _changeMonthsYear(-1),
-                      icon: const Icon(Icons.chevron_right),
+                      icon: const Icon(Icons.chevron_left),
                     ),
                     Expanded(
                       child: Text(
@@ -310,7 +312,7 @@ class _StudentFormState extends State<StudentForm> {
                     ),
                     IconButton(
                       onPressed: () => _changeMonthsYear(1),
-                      icon: const Icon(Icons.chevron_left),
+                      icon: const Icon(Icons.chevron_right),
                     ),
                   ],
                 ),
@@ -342,6 +344,10 @@ class _StudentFormState extends State<StudentForm> {
                       );
                     }),
                   ),
+                if (_monthError != null) ...[
+                  const SizedBox(height: NawahSpacing.s3),
+                  FormErrorBanner(message: _monthError),
+                ],
               ],
               const SizedBox(height: NawahSpacing.s5),
 
@@ -433,6 +439,7 @@ class _StudentFormState extends State<StudentForm> {
               ),
 
               const SizedBox(height: NawahSpacing.s6),
+              FormErrorBanner(message: _saveError),
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy

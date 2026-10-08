@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../brand/logo.dart';
 import '../brand/tokens.dart';
 import 'adaptive.dart';
 import 'nav_item.dart';
@@ -14,12 +15,16 @@ class AccountInfo {
     required this.roleLabel,
     required this.initial,
     required this.onSignOut,
+    this.onChangePassword,
   });
 
   final String displayName;
   final String roleLabel;
   final String initial;
   final VoidCallback onSignOut;
+
+  /// يفتح نموذج تغيير كلمة المرور؛ فارغ = لا يظهر الخيار (المعاينة والاختبار).
+  final void Function(BuildContext context)? onChangePassword;
 }
 
 /// الهيكل الذي يلفّ كل شاشات اللوحة.
@@ -56,6 +61,22 @@ class AppShell extends StatelessWidget {
   Widget _wide(BuildContext context) {
     final extended = context.isDesktop;
 
+    // NavigationRail يشترط عنصرين على الأقل — المدرّب له قسم واحد فقط
+    // (اللقاءات)، فيُعرض بلا تنقّل بدل أن ينهار التطبيق.
+    if (items.length < 2) {
+      return Scaffold(
+        body: Column(
+          children: [
+            _TopBar(
+              title: title ?? items.first.label,
+              actions: [...?actions, _AccountButton(account: account, extended: false)],
+            ),
+            Expanded(child: child),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: Row(
         children: [
@@ -65,7 +86,7 @@ class AppShell extends StatelessWidget {
             selectedIndex: index,
             onDestinationSelected: onSelect,
             backgroundColor: NawahColors.ink,
-            indicatorColor: NawahColors.primary.withValues(alpha: .22),
+            indicatorColor: NawahColors.inkLine,
             leading: _RailHeader(extended: extended),
             trailing: Expanded(
               child: Align(
@@ -93,10 +114,10 @@ class AppShell extends StatelessWidget {
               fontFamily: NawahFonts.body,
             ),
             unselectedLabelTextStyle: const TextStyle(
-              color: Color(0xFF93A2C2),
+              color: NawahColors.invertSoft,
               fontFamily: NawahFonts.body,
             ),
-            unselectedIconTheme: const IconThemeData(color: Color(0xFF93A2C2)),
+            unselectedIconTheme: const IconThemeData(color: NawahColors.invertSoft),
             selectedIconTheme: const IconThemeData(color: Colors.white),
           ),
           const VerticalDivider(width: 1, color: NawahColors.border),
@@ -114,24 +135,181 @@ class AppShell extends StatelessWidget {
   }
 
   // ---------- جوّال ----------
+  //
+  // الشريط السفلي يتّسع لأربعة عناصر بأسماء مقروءة. الأقسام المثبَّتة
+  // (NavItem.pinned) تظهر فيه مباشرة، والباقي خلف «المزيد» في لوح سفلي —
+  // بدل تسعة أيقونات متلاصقة تنكسر أسماؤها على سطرين.
+  static const _maxPinned = 4;
+
   Widget _narrow(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title ?? items[index].label),
-        actions: [...?actions, _AccountButton(account: account, extended: false)],
-      ),
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: onSelect,
-        destinations: [
-          for (final it in items)
-            NavigationDestination(
-              icon: _Badged(count: it.badgeCount, child: Icon(it.icon)),
-              selectedIcon: _Badged(count: it.badgeCount, child: Icon(it.selectedIcon)),
-              label: it.label,
-            ),
+    final appBar = AppBar(
+      titleSpacing: NawahSpacing.s4,
+      title: Row(
+        children: [
+          const NawahLogo(height: 24, color: NawahColors.ink),
+          const SizedBox(width: NawahSpacing.s3),
+          Flexible(
+            child: Text(title ?? items[index].label, overflow: TextOverflow.ellipsis),
+          ),
         ],
+      ),
+      actions: [
+        ...?actions,
+        _AccountButton(account: account, extended: false),
+        const SizedBox(width: NawahSpacing.s2),
+      ],
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(1),
+        child: Divider(height: 1, thickness: 1, color: NawahColors.border),
+      ),
+    );
+
+    if (items.length < 2) {
+      return Scaffold(appBar: appBar, body: child);
+    }
+
+    // الفهارس الأصلية للعناصر الظاهرة في الشريط، وللعناصر خلف «المزيد».
+    final all = List<int>.generate(items.length, (i) => i);
+    var pinned = all.where((i) => items[i].pinned).take(_maxPinned).toList();
+    if (pinned.isEmpty) pinned = all.take(_maxPinned).toList();
+    final overflow = all.where((i) => !pinned.contains(i)).toList();
+    // لا معنى لـ«المزيد» يحوي عنصراً واحداً — يظهر هو نفسه مكانه.
+    if (overflow.length == 1) {
+      pinned = [...pinned, overflow.single];
+      overflow.clear();
+    }
+
+    final inOverflow = overflow.contains(index);
+    final overflowBadge =
+        overflow.fold<int>(0, (sum, i) => sum + items[i].badgeCount);
+
+    return Scaffold(
+      appBar: appBar,
+      body: child,
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: NawahColors.border)),
+        ),
+        child: NavigationBar(
+          selectedIndex: inOverflow ? pinned.length : pinned.indexOf(index),
+          onDestinationSelected: (i) {
+            if (i < pinned.length) {
+              onSelect(pinned[i]);
+            } else {
+              _openMore(context, overflow);
+            }
+          },
+          destinations: [
+            for (final i in pinned)
+              NavigationDestination(
+                icon: _Badged(count: items[i].badgeCount, child: Icon(items[i].icon)),
+                selectedIcon: _Badged(
+                  count: items[i].badgeCount,
+                  child: Icon(items[i].selectedIcon),
+                ),
+                label: items[i].label,
+              ),
+            if (overflow.isNotEmpty)
+              NavigationDestination(
+                icon: _Badged(
+                  count: overflowBadge,
+                  child: Icon(inOverflow ? items[index].icon : Icons.menu),
+                ),
+                selectedIcon: _Badged(
+                  count: overflowBadge,
+                  child: Icon(items[index].selectedIcon),
+                ),
+                // حين يكون القسم المفتوح من «المزيد» يظهر اسمه هنا، فيعرف
+                // المستخدم أين هو دون النظر إلى العنوان.
+                label: inOverflow ? items[index].label : 'المزيد',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMore(BuildContext context, List<int> overflow) {
+    return showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      // بلا هذا يُقصّ اللوح عند ٩/١٦ من الشاشة فيختفي «تسجيل الخروج» تحت
+      // الحافة؛ هكذا يأخذ طول محتواه (ويتمرّر فقط إن تجاوز الشاشة).
+      isScrollControlled: true,
+      builder: (sheet) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: NawahSpacing.s3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final i in overflow)
+                ListTile(
+                  leading: _Badged(
+                    count: items[i].badgeCount,
+                    child: Icon(
+                      i == index ? items[i].selectedIcon : items[i].icon,
+                      color: NawahColors.ink,
+                    ),
+                  ),
+                  title: Text(
+                    items[i].label,
+                    style: TextStyle(
+                      fontWeight: i == index ? FontWeight.w700 : FontWeight.w500,
+                      color: NawahColors.ink,
+                    ),
+                  ),
+                  selected: i == index,
+                  selectedTileColor: NawahColors.inkTint,
+                  minTileHeight: 52,
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    onSelect(i);
+                  },
+                ),
+              const Divider(height: NawahSpacing.s5),
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: NawahColors.ink,
+                  child: Text(
+                    account.initial,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                title: Text(account.displayName),
+                subtitle: Text(account.roleLabel),
+              ),
+              if (account.onChangePassword != null)
+                ListTile(
+                  leading: const Icon(Icons.lock_reset, color: NawahColors.ink),
+                  title: const Text('تغيير كلمة المرور'),
+                  minTileHeight: 52,
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    account.onChangePassword!(context);
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.logout, color: NawahColors.err),
+                title: const Text(
+                  'تسجيل الخروج',
+                  style: TextStyle(color: NawahColors.err, fontWeight: FontWeight.w600),
+                ),
+                minTileHeight: 52,
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  account.onSignOut();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -149,7 +327,7 @@ class _Badged extends StatelessWidget {
     return Badge.count(
       count: count,
       backgroundColor: NawahColors.accent,
-      textColor: const Color(0xFF3D2600),
+      textColor: NawahColors.onAccent,
       child: child,
     );
   }
@@ -167,21 +345,21 @@ class _RailHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _Nucleus(size: 34),
+          const NawahLogo(height: 34, color: NawahColors.textInvert),
           if (extended) ...[
             const SizedBox(width: NawahSpacing.s3),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('نواة فليكس',
+                Text('أكاديمية نواة',
                     style: TextStyle(
                       color: Colors.white,
                       fontFamily: NawahFonts.display,
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                     )),
-                Text('لوحة الإدارة',
-                    style: TextStyle(color: Color(0xFF6B7A9C), fontSize: 11)),
+                Text('البوابة',
+                    style: TextStyle(color: NawahColors.invertSoft, fontSize: 11)),
               ],
             ),
           ],
@@ -189,46 +367,6 @@ class _RailHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-/// شعار النواة — نفس فكرة شعار الموقع، مرسوم بـ Flutter لا صورة.
-class _Nucleus extends StatelessWidget {
-  const _Nucleus({this.size = 34});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.rotate(angle: -0.5, child: _ring(NawahColors.cyan)),
-          Transform.rotate(angle: 0.56, child: _ring(NawahColors.violet)),
-          Container(
-            width: size * 0.36,
-            height: size * 0.36,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFF60A5FA), NawahColors.primary],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ring(Color c) => Container(
-        width: size,
-        height: size * 0.42,
-        decoration: BoxDecoration(
-          border: Border.all(color: c, width: 1.4),
-          borderRadius: BorderRadius.all(Radius.elliptical(size, size * 0.42)),
-        ),
-      );
 }
 
 class _TopBar extends StatelessWidget {
@@ -282,6 +420,7 @@ class _AccountButton extends StatelessWidget {
       tooltip: 'الحساب',
       onSelected: (v) {
         if (v == 'signout') account.onSignOut();
+        if (v == 'password') account.onChangePassword?.call(context);
       },
       itemBuilder: (_) => [
         PopupMenuItem(
@@ -293,6 +432,15 @@ class _AccountButton extends StatelessWidget {
           ),
         ),
         const PopupMenuDivider(),
+        if (account.onChangePassword != null)
+          const PopupMenuItem(
+            value: 'password',
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.lock_reset, size: 20),
+              title: Text('تغيير كلمة المرور'),
+            ),
+          ),
         const PopupMenuItem(
           value: 'signout',
           child: ListTile(

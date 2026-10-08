@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../brand/logo.dart';
 import '../../brand/tokens.dart';
 import '../../shared/adaptive.dart';
 import 'auth_service.dart';
+import 'login_identifier.dart';
 
 /// شاشة الدخول — بطاقة موسّطة على المكتب، صفحة كاملة على الجوّال.
 class LoginScreen extends StatefulWidget {
@@ -34,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _busy = true;
       _error = null;
     });
-    final err = await widget.auth.signIn(_email.text, _password.text);
+    final err = await widget.auth.signIn(loginEmailFor(_email.text)!, _password.text);
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -62,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('لوحة إدارة نواة فليكس',
+                      const Center(child: NawahLogo(height: 64)),
+                      const SizedBox(height: NawahSpacing.s5),
+                      const Text('بوابة أكاديمية نواة',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: NawahFonts.display,
@@ -71,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: NawahColors.ink,
                           )),
                       const SizedBox(height: NawahSpacing.s2),
-                      const Text('سجّل الدخول بحسابك للمتابعة',
+                      const Text('للإدارة والمدرّبين والأهالي والطلاب',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: NawahColors.textSoft, fontSize: 14)),
                       const SizedBox(height: NawahSpacing.s6),
@@ -79,17 +83,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
+                        autofillHints: const [AutofillHints.email, AutofillHints.username],
                         textDirection: TextDirection.ltr,
                         decoration: const InputDecoration(
-                          labelText: 'البريد الإلكتروني',
+                          labelText: 'البريد أو اسم المستخدم',
+                          helperText: 'الطلاب: اسم المستخدم من الأكاديمية.',
                           prefixIcon: Icon(Icons.alternate_email),
                         ),
                         validator: (v) {
                           final s = (v ?? '').trim();
-                          if (s.isEmpty) return 'أدخل البريد الإلكتروني';
-                          if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(s)) {
-                            return 'صيغة البريد غير صحيحة';
+                          if (s.isEmpty) return 'أدخل البريد أو اسم المستخدم';
+                          if (loginEmailFor(s) == null) {
+                            return s.contains('@') ? 'صيغة البريد غير صحيحة' : 'اسم المستخدم غير صحيح';
                           }
                           return null;
                         },
@@ -120,12 +125,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
+                            color: NawahColors.errSoft,
                             borderRadius: BorderRadius.circular(NawahRadius.sm),
-                            border: Border.all(color: const Color(0xFFFECACA)),
+                            border: Border.all(color: NawahColors.err.withValues(alpha: .25)),
                           ),
                           child: Text(_error!,
-                              style: const TextStyle(color: Color(0xFF991B1B), fontSize: 13)),
+                              style: const TextStyle(color: NawahColors.err, fontSize: 13)),
                         ),
                       ],
 

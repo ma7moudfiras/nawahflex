@@ -1,11 +1,13 @@
 // ============================================================================
-// نواة فليكس — رموز الهوية البصرية لتطبيق Flutter
+// أكاديمية نواة — رموز الهوية البصرية لتطبيق Flutter
 // ----------------------------------------------------------------------------
 // ⚠️ هذا الملف مرآة لـ site/css/tokens.css — القيم يجب أن تبقى متطابقة حرفياً.
 //    عند تغيير أي لون أو خط، غيّره في الملفين معاً.
 //
-// الاستخدام (المرحلة الثانية):
-//    import 'package:nawahflex/brand/tokens.dart';
+// الهوية: حبر كحلي على ورق دافئ، ولون توقيع واحد — القرميدي.
+//
+// الاستخدام:
+//    import 'package:nawahflex_app/brand/tokens.dart';
 //    MaterialApp(theme: NawahTheme.light, ...)
 // ============================================================================
 
@@ -14,45 +16,53 @@ import 'package:flutter/material.dart';
 class NawahColors {
   NawahColors._();
 
-  // الألوان الأساسية
-  static const ink        = Color(0xFF070C1E);
-  static const inkSoft    = Color(0xFF101836);
-  static const inkMuted   = Color(0xFF1B2547);
+  // الحبر والورق                                    ← tokens.css
+  static const ink       = Color(0xFF1B2A41);  // --c-ink       الكحلي
+  static const inkDeep   = Color(0xFF121D2E);  // --c-ink-deep
+  static const inkSoft   = Color(0xFF26364F);  // --c-ink-soft
+  static const inkLine   = Color(0xFF3A4A63);  // --c-ink-line  حدود على الكحلي
+  static const inkTint   = Color(0xFFE3E7EE);  // --c-ink-tint  خلفية العنصر المختار
+  static const paper     = Color(0xFFF7F5F0);  // --c-paper
+  static const paperDeep = Color(0xFFEFECE5);  // --c-paper-deep
+  static const card      = Color(0xFFFFFFFF);  // --c-card
 
-  static const primary     = Color(0xFF2563EB);
-  static const primaryDark = Color(0xFF1D4ED8);
-  static const primarySoft = Color(0xFFDBEAFE);
+  // لون التوقيع — القرميدي. على خلفيته يكون النص onAccent لا الأبيض.
+  static const accent     = Color(0xFFE2552B); // --c-accent
+  static const accentInk  = Color(0xFFB23C17); // --c-accent-ink  نص صغير ملوّن
+  static const accentSoft = Color(0xFFFBE3DA); // --c-accent-soft
+  static const onAccent   = Color(0xFF0E1726); // --c-on-accent
 
-  static const accent     = Color(0xFFF7931E);  // برتقالي الهوية من شعار FlexMind
-  static const accentLite = Color(0xFFFBB040);
-  static const accentSoft = Color(0xFFFEF0DC);
-
-  // FlexMind — العلامة الفرعية لبرنامج «عقل وجسد»
-  static const fmNavy     = Color(0xFF142A6E);
-  static const fmNavyDeep = Color(0xFF0C1A4A);
-  static const fmBlue     = Color(0xFF3B7DDD);
-  static const fmBlueLite = Color(0xFF6FA3F0);
-  static const fmOrange   = Color(0xFFF7931E);
-  static const fmOrangeLt = Color(0xFFFBB040);
-
-  static const cyan   = Color(0xFF06B6D4);
-  static const violet = Color(0xFF7C3AED);
-  static const green  = Color(0xFF10B981);
-  static const rose   = Color(0xFFF43F5E);
-
-  // الأسطح
-  static const bg         = Color(0xFFFFFFFF);
-  static const bgAlt      = Color(0xFFF6F7FB);
-  static const bgWarm     = Color(0xFFFBF9F4);
-  static const card       = Color(0xFFFFFFFF);
-  static const border     = Color(0xFFE4E7EF);
-  static const borderSoft = Color(0xFFEFF1F7);
+  // الحدود
+  static const border     = Color(0xFFDDD8CE); // --c-border
+  static const borderSoft = Color(0xFFE9E5DD); // --c-border-soft
 
   // النصوص
-  static const text       = Color(0xFF0F172A);
-  static const textSoft   = Color(0xFF475569);
-  static const textMuted  = Color(0xFF7A8699);
-  static const textInvert = Color(0xFFFFFFFF);
+  static const text       = Color(0xFF1B2A41); // --c-text
+  static const textSoft   = Color(0xFF4A5263); // --c-text-soft
+  static const textMuted  = Color(0xFF687082); // --c-text-muted
+  static const textInvert = Color(0xFFFFFFFF); // --c-text-invert
+  static const invertSoft = Color(0xFFB9C0CC); // --c-invert-soft  نص ثانوي على الكحلي
+
+  // الحالات
+  static const ok        = Color(0xFF1F7A3E);  // --c-ok
+  static const okSoft    = Color(0xFFE6F2EA);  // --c-ok-soft
+  static const err       = Color(0xFFB42318);  // --c-err
+  static const errSoft   = Color(0xFFFBE9E7);  // --c-err-soft
+
+  // ألوان وظيفية للرسوم والحالات                     ← --c-data-*
+  static const blue   = Color(0xFF2563EB);
+  static const cyan   = Color(0xFF0E7490);
+  static const violet = Color(0xFF6D28D9);
+  static const green  = Color(0xFF10B981);
+  static const rose   = Color(0xFFE11D48);
+
+  // أسماء أدوار — تُبقي شاشات اللوحة تعمل دون أن تعرف القيم:
+  // «الأساسي» في الهوية الجديدة هو الكحلي، كما في أزرار الموقع.
+  static const primary     = ink;
+  static const primaryDark = inkDeep;
+  static const primarySoft = inkTint;
+  static const bg          = card;
+  static const bgAlt       = paper;
 }
 
 class NawahRadius {
@@ -75,7 +85,7 @@ class NawahSpacing {
 class NawahFonts {
   NawahFonts._();
   /// خط العناوين — يقابل --f-display
-  static const display = 'Tajawal';
+  static const display = 'Alexandria';
   /// خط النصوص — يقابل --f-body
   static const body = 'IBMPlexSansArabic';
 }
@@ -92,10 +102,11 @@ class NawahTheme {
         colorScheme: ColorScheme.fromSeed(
           seedColor: NawahColors.primary,
           primary: NawahColors.primary,
-          secondary: NawahColors.cyan,
-          tertiary: NawahColors.accent,
+          secondary: NawahColors.accent,
+          onSecondary: NawahColors.onAccent,
+          tertiary: NawahColors.cyan,
           surface: NawahColors.card,
-          error: NawahColors.rose,
+          error: NawahColors.err,
         ),
         textTheme: const TextTheme(
           displayLarge:  TextStyle(fontFamily: NawahFonts.display, fontWeight: FontWeight.w800, color: NawahColors.ink),
@@ -148,6 +159,119 @@ class NawahTheme {
             borderRadius: BorderRadius.circular(NawahRadius.sm),
             borderSide: const BorderSide(color: NawahColors.border, width: 1.5),
           ),
+          // بدون enabledBorder صريح يرسم Material الحدّ بلون outline من البذرة
+          // (رمادي مزرقّ) لا بحدود الهوية الدافئة.
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.sm),
+            borderSide: const BorderSide(color: NawahColors.border, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.sm),
+            borderSide: const BorderSide(color: NawahColors.ink, width: 2),
+          ),
         ),
+
+        // ---- الجوّال: شريط علوي على الورق، بلا ظلّ ولا تلوّن عند التمرير ----
+        appBarTheme: const AppBarTheme(
+          backgroundColor: NawahColors.paper,
+          foregroundColor: NawahColors.ink,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            fontFamily: NawahFonts.display,
+            fontWeight: FontWeight.w800,
+            fontSize: 19,
+            color: NawahColors.ink,
+          ),
+        ),
+
+        // زر الإضافة العائم بلون الحبر — لا الأزرق الفاتح المشتقّ من البذرة.
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: NawahColors.ink,
+          foregroundColor: NawahColors.textInvert,
+          elevation: 2,
+          highlightElevation: 4,
+          shape: StadiumBorder(),
+          extendedTextStyle: TextStyle(
+            fontFamily: NawahFonts.body,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        // الشريط السفلي: أبيض بحدّ علوي رفيع، والمختار بخلفية حبر فاتحة.
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: NawahColors.inkTint,
+          height: 66,
+          elevation: 0,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          iconTheme: WidgetStateProperty.resolveWith(
+            (s) => IconThemeData(
+              size: 23,
+              color: s.contains(WidgetState.selected)
+                  ? NawahColors.ink
+                  : NawahColors.textMuted,
+            ),
+          ),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (s) => TextStyle(
+              fontFamily: NawahFonts.body,
+              fontSize: 11.5,
+              fontWeight: s.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              color: s.contains(WidgetState.selected)
+                  ? NawahColors.ink
+                  : NawahColors.textMuted,
+            ),
+          ),
+        ),
+
+        // النماذج على الجوّال: لوح سفلي بمقبض سحب وزوايا علوية مستديرة.
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          showDragHandle: true,
+          dragHandleColor: NawahColors.border,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(NawahRadius.lg)),
+          ),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: NawahColors.card,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.lg),
+          ),
+        ),
+
+        // تنبيهات عائمة فوق الشريط السفلي، لا ملتصقة تحته.
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: NawahColors.ink,
+          contentTextStyle: TextStyle(
+            fontFamily: NawahFonts.body,
+            color: NawahColors.textInvert,
+          ),
+        ),
+
+        chipTheme: ChipThemeData(
+          backgroundColor: NawahColors.card,
+          selectedColor: NawahColors.inkTint,
+          side: const BorderSide(color: NawahColors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(NawahRadius.full),
+          ),
+          labelStyle: const TextStyle(
+            fontFamily: NawahFonts.body,
+            color: NawahColors.ink,
+            fontWeight: FontWeight.w600,
+          ),
+          checkmarkColor: NawahColors.ink,
+        ),
+        dividerTheme: const DividerThemeData(color: NawahColors.borderSoft),
       );
 }

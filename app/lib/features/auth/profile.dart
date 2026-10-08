@@ -17,6 +17,8 @@ class Profile {
   bool get canManage => role == 'admin' || role == 'editor';
   bool get isAdmin => role == 'admin';
   bool get isTrainer => role == 'trainer';
+  bool get isParent => role == 'parent';
+  bool get isStudent => role == 'student';
 
   String get displayName =>
       (fullName == null || fullName!.trim().isEmpty) ? 'مستخدم' : fullName!.trim();
@@ -28,6 +30,8 @@ class Profile {
     'admin': 'مدير',
     'editor': 'محرّر',
     'trainer': 'مدرّب',
+    'parent': 'ولي أمر',
+    'student': 'طالب',
     'viewer': 'مشاهد',
   };
 

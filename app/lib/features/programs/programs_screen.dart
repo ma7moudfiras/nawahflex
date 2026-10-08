@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
-import '../../shared/adaptive.dart';
+import '../../shared/card_grid.dart';
+import '../../shared/sheets.dart';
 import '../../shared/money.dart';
+import '../progress/skills_editor.dart';
 import 'program.dart';
 import 'program_form.dart';
 import 'programs_repository.dart';
@@ -51,23 +53,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
       await _load();
     }
 
-    if (context.isWide) {
-      await showDialog(
-        context: context,
-        builder: (_) => Dialog(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ProgramForm(initial: existing, onSubmit: onSubmit),
-          ),
-        ),
-      );
-    } else {
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => ProgramForm(initial: existing, onSubmit: onSubmit),
-      );
-    }
+    await showAdaptiveSheet<void>(
+      context,
+      builder: (_) => ProgramForm(initial: existing, onSubmit: onSubmit),
+    );
   }
 
   @override
@@ -89,17 +78,10 @@ class _ProgramsScreenState extends State<ProgramsScreen> {
         subtitle: 'اضغط زر الإضافة لإنشاء أول برنامج — مثلاً «RoboMission Elementary».',
       );
     } else {
-      final columns = adaptive(context, mobile: 1, tablet: 2, desktop: 3);
       body = RefreshIndicator(
         onRefresh: _load,
-        child: GridView.builder(
-          padding: const EdgeInsets.all(NawahSpacing.s4),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: NawahSpacing.s3,
-            crossAxisSpacing: NawahSpacing.s3,
-            mainAxisExtent: 150,
-          ),
+        child: CardGrid(
+          extent: 150,
           itemCount: _items.length,
           itemBuilder: (_, i) => _ProgramCard(
             program: _items[i],
@@ -142,17 +124,28 @@ class _ProgramCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(program.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: NawahColors.ink)),
-              const SizedBox(height: NawahSpacing.s2),
-              Expanded(
-                child: Text(program.description,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(program.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: NawahColors.ink)),
+                  ),
+                  IconButton(
+                    tooltip: 'مهارات البرنامج',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => showSkillsEditor(context, programId: program.id, programTitle: program.title),
+                    icon: const Icon(Icons.insights_outlined, color: NawahColors.ink),
+                  ),
+                ],
+              ),
+              const SizedBox(height: NawahSpacing.s1),
+              if (program.description.isNotEmpty)
+                Text(program.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: NawahColors.textSoft, fontSize: 13, height: 1.6)),
-              ),
               Wrap(
                 spacing: NawahSpacing.s2,
                 runSpacing: NawahSpacing.s2,

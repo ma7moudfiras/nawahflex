@@ -13,6 +13,7 @@ class Student {
     this.notes,
     this.photoUrl,
     this.programTitles = const [],
+    this.programIds = const [],
     this.billingStartMonth,
   });
 
@@ -28,6 +29,9 @@ class Student {
   final bool isActive;
   final DateTime createdAt;
   final List<String> programTitles;
+
+  /// معرّفات البرامج بنفس ترتيب [programTitles] — لمهارات كل برنامج.
+  final List<String> programIds;
 
   /// أول شهر يُحتسب للطالب مستحقات من أجله — يمنع ظهوره "غير مسدَّد"
   /// لأشهر سابقة لالتحاقه فعلياً بالأكاديمية.
@@ -78,6 +82,14 @@ class Student {
         )
         .whereType<Map<String, dynamic>>()
         .map((p) => p['title'] as String)
+        .toList(),
+    programIds: ((m['student_programs'] as List?) ?? const [])
+        .map(
+          (sp) =>
+              (sp as Map<String, dynamic>)['programs'] as Map<String, dynamic>?,
+        )
+        .whereType<Map<String, dynamic>>()
+        .map((p) => p['id'] as String)
         .toList(),
   );
 

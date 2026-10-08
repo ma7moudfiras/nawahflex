@@ -1,3 +1,4 @@
+import '../../core/errors.dart';
 import '../../core/supabase.dart';
 import 'student_due.dart';
 
@@ -60,7 +61,7 @@ class BillingRepository {
           'student_programs(programs(price, sibling_price))',
         )
         .eq('is_active', true)
-        .order('full_name');
+        .order('full_name', ascending: true);
 
     final overrides = await Db.client
         .from('student_billing_months')
@@ -194,10 +195,13 @@ class BillingRepository {
   }
 
   Future<void> setSiblingDiscount(String studentId, bool enabled) async {
-    await Db.client
-        .from('students')
-        .update({'sibling_discount': enabled})
-        .eq('id', studentId);
+    expectRows(
+      await Db.client
+          .from('students')
+          .update({'sibling_discount': enabled})
+          .eq('id', studentId)
+          .select('id'),
+    );
     await Db.client.from('student_discount_log').insert({
       'student_id': studentId,
       'enabled': enabled,

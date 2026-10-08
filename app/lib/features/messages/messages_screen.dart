@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/errors.dart';
+import '../../core/open_url.dart';
 import '../../shared/adaptive.dart';
 import 'message.dart';
 import 'messages_repository.dart';
@@ -60,7 +61,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }
   }
 
-  Future<void> _setStatus(Message m, String status) async {
+  /// يرجع true إن حُفظت الحالة فعلاً.
+  Future<bool> _setStatus(Message m, String status) async {
     try {
       await _repo.setStatus(m.id, status);
       await _load();
@@ -69,18 +71,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
           SnackBar(content: Text('تم التحديث إلى «${Message.statusLabels[status]}»')),
         );
       }
-    } catch (_) {
+      return true;
+    } catch (e, st) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذّر التحديث — تأكّد من صلاحيتك.')),
+          SnackBar(content: Text(userMessageFor(e, st))),
         );
       }
+      return false;
     }
   }
 
   Future<void> _open(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!await openExternal(url)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تعذّر فتح الرابط')),
@@ -130,13 +133,24 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           if (context.isWide) {
                             setState(() => _selected = m);
                           } else {
+                            var current = m;
                             Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => Scaffold(
-                                appBar: AppBar(title: Text(m.name)),
-                                body: _Detail(
-                                  message: m,
-                                  onStatus: (s) => _setStatus(m, s),
-                                  onOpen: _open,
+                              // الصفحة تعكس الحالة الجديدة فور تغييرها — كانت
+                              // تُبقي الشريحة القديمة مختارة رغم رسالة «تم».
+                              builder: (_) => StatefulBuilder(
+                                builder: (ctx, setPage) => Scaffold(
+                                  appBar: AppBar(title: const Text('تفاصيل الرسالة')),
+                                  body: _Detail(
+                                    message: current,
+                                    onStatus: (s) async {
+                                      if (await _setStatus(current, s)) {
+                                        // قد تختفي الرسالة من القائمة المصفّاة
+                                        // بعد تغيير حالتها، فنحدّث النسخة هنا.
+                                        setPage(() => current = current.withStatus(s));
+                                      }
+                                    },
+                                    onOpen: _open,
+                                  ),
                                 ),
                               ),
                             ));
@@ -198,7 +212,7 @@ class _FilterBar extends StatelessWidget {
         children: [
           for (final e in _filters.entries)
             Padding(
-              padding: const EdgeInsets.only(left: NawahSpacing.s2),
+              padding: const EdgeInsetsDirectional.only(end: NawahSpacing.s2),
               child: ChoiceChip(
                 label: Text(e.value),
                 selected: current == e.key,
@@ -340,7 +354,6 @@ class _Detail extends StatelessWidget {
                 onPressed: () => onOpen(message.whatsappUrl),
                 icon: const Icon(Icons.chat, size: 18),
                 label: const Text('واتساب'),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
               ),
               OutlinedButton.icon(
                 onPressed: () => onOpen(message.telUrl),

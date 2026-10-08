@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../brand/tokens.dart';
+import '../../core/errors.dart';
+import '../../shared/form_error.dart';
 import '../auth/profile.dart';
 import '../programs/program.dart';
 import '../students/student.dart';
@@ -43,6 +45,7 @@ class _CohortFormState extends State<CohortForm> {
   bool _isActive = true;
   late Set<String> _selectedStudentIds;
   bool _busy = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -83,7 +86,10 @@ class _CohortFormState extends State<CohortForm> {
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _saveError = null;
+    });
     try {
       await widget.onSubmit(
         Cohort(
@@ -101,12 +107,8 @@ class _CohortFormState extends State<CohortForm> {
         _selectedStudentIds.toList(),
       );
       if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذّر الحفظ — تأكّد من اتصالك وحاول مجدداً.')),
-        );
-      }
+    } catch (e, st) {
+      if (mounted) setState(() => _saveError = userMessageFor(e, st));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -241,6 +243,7 @@ class _CohortFormState extends State<CohortForm> {
               ],
 
               const SizedBox(height: NawahSpacing.s6),
+              FormErrorBanner(message: _saveError),
               FilledButton(
                 onPressed: _busy ? null : _submit,
                 child: _busy

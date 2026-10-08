@@ -38,10 +38,15 @@ dependencies:
   go_router: ^18.0.0
   flutter_localizations:
     sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
   characters: ^1.4.1
   url_launcher: ^6.3.2
   web: ^1.1.1
   intl: ^0.20.3
+  file_picker: ^13.1.0
+  image: ^4.10.1
+  pdf: ^3.13.1
 
 dev_dependencies:
   flutter_test:
@@ -79,11 +84,14 @@ flutter:
           weight: 600
         - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
           weight: 700
-    - family: Tajawal
+    # خطّ الشعار والعناوين — نسخ ثابتة من Alexandria المتغيّر بالأوزان المستعملة فقط
+    - family: Alexandria
       fonts:
-        - asset: assets/fonts/Tajawal-Bold.ttf
+        - asset: assets/fonts/Alexandria-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Alexandria-Bold.ttf
           weight: 700
-        - asset: assets/fonts/Tajawal-ExtraBold.ttf
+        - asset: assets/fonts/Alexandria-ExtraBold.ttf
           weight: 800
 
   # To add assets to your application, add an assets section, like this:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../brand/tokens.dart';
 import '../../core/supabase.dart';
@@ -194,6 +195,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       );
     } else {
       await showModalBottomSheet(
+        useRootNavigator: true,
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
@@ -303,12 +305,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
                 const SizedBox(height: NawahSpacing.s3),
               ],
-              DropdownButton<Cohort>(
-                value: cohorts.contains(_selectedCohort)
+              // حقل بإطار وعنوان مثل حقل المدرّب فوقه — كان سهماً عائماً بلا
+              // إطار لا يبدو قابلاً للضغط على الجوّال.
+              DropdownButtonFormField<Cohort>(
+                // initialValue يُقرأ مرة واحدة؛ المفتاح يعيد بناء الحقل حين
+                // يتغيّر الفوج المختار من خارجه (تصفية بالمدرّب مثلاً).
+                key: ValueKey(_selectedCohort?.id),
+                initialValue: cohorts.contains(_selectedCohort)
                     ? _selectedCohort
                     : null,
                 isExpanded: true,
-                underline: const SizedBox.shrink(),
+                decoration: const InputDecoration(labelText: 'الفوج'),
                 hint: const Text('اختر فوجاً'),
                 items: cohorts
                     .map(
@@ -385,7 +392,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             trailing: const Icon(
-                              Icons.chevron_left,
+                              Icons.chevron_right,
                               color: NawahColors.textMuted,
                             ),
                           ),
@@ -966,9 +973,9 @@ class _RosterList extends StatelessWidget {
   final void Function(String studentId, String status) onPick;
 
   static const _colors = <String, Color>{
-    AttendanceStatus.present: NawahColors.green,
-    AttendanceStatus.absent: NawahColors.rose,
-    AttendanceStatus.late: NawahColors.accent,
+    AttendanceStatus.present: NawahColors.ok,
+    AttendanceStatus.absent: NawahColors.err,
+    AttendanceStatus.late: NawahColors.accentInk,
     AttendanceStatus.excused: NawahColors.cyan,
   };
 
@@ -991,12 +998,20 @@ class _RosterList extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      entry.fullName,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: NawahColors.ink,
+                    // الاسم يفتح ملف الطالب: منه يمنح المدرّب شارة أو يقيّم مهارة.
+                    child: InkWell(
+                      onTap: () => context.push('/students/${entry.studentId}'),
+                      borderRadius: BorderRadius.circular(NawahRadius.sm),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: NawahSpacing.s2),
+                        child: Text(
+                          entry.fullName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: NawahColors.ink,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1073,9 +1088,9 @@ class _MeetingDetailScreen extends StatelessWidget {
   final VoidCallback onEdit;
 
   static const _colors = <String, Color>{
-    AttendanceStatus.present: NawahColors.green,
-    AttendanceStatus.absent: NawahColors.rose,
-    AttendanceStatus.late: NawahColors.accent,
+    AttendanceStatus.present: NawahColors.ok,
+    AttendanceStatus.absent: NawahColors.err,
+    AttendanceStatus.late: NawahColors.accentInk,
     AttendanceStatus.excused: NawahColors.cyan,
   };
 
@@ -1175,6 +1190,7 @@ class _MeetingDetailScreen extends StatelessWidget {
                 for (final entry in roster) ...[
                   ListTile(
                     title: Text(entry.fullName),
+                    onTap: () => context.push('/students/${entry.studentId}'),
                     trailing: Builder(
                       builder: (_) {
                         final status = statuses[entry.studentId];

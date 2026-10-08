@@ -3,72 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#070C1E">
+<meta name="theme-color" content="#1B2A41">
 <meta name="robots" content="noindex">
-<title>الصفحة غير موجودة — أكاديمية نواة فليكس</title>
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="css/tokens.css">
+<title>الصفحة غير موجودة — أكاديمية نواة</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/fonts.css?v=2">
+<link rel="stylesheet" href="/css/tokens.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   * { margin: 0; padding: 0; }
   body {
-    min-height: 100dvh;
-    display: grid; place-items: center;
-    padding: 2rem;
-    font-family: var(--f-body);
-    color: #C7D0E4;
-    background: linear-gradient(120deg, var(--c-ink) 0%, #16225A 60%, #2D1B69 100%);
-    text-align: center;
-    overflow: hidden;
+    min-height: 100dvh; display: grid; place-items: center; padding: 2rem;
+    font-family: var(--f-body); color: var(--c-text); background: var(--c-paper); text-align: center;
   }
-  body::before {
-    content: ""; position: fixed; inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
-    background-size: 30px 30px;
-  }
-  .wrap { position: relative; max-width: 520px; }
-  .orb { width: 132px; height: 132px; margin: 0 auto 2rem; position: relative; }
-  .ring { position: absolute; inset: 44px 0; border-radius: 50%; border: 2px solid; }
-  .r1 { border-color: var(--c-cyan);   transform: rotate(-28deg); }
-  .r2 { border-color: var(--c-violet); transform: rotate(32deg); }
-  .core {
-    position: absolute; inset: 47px; border-radius: 50%;
-    background: radial-gradient(circle at 34% 30%, #93C5FD, var(--c-primary) 60%, #4C1D95);
-    box-shadow: 0 0 44px rgba(37,99,235,.6);
-  }
-  h1 {
-    font-family: var(--f-display); font-weight: 800;
-    font-size: clamp(3.4rem, 12vw, 5.4rem); line-height: 1;
-    color: #fff; letter-spacing: -.04em; margin-bottom: .6rem;
-    direction: ltr;
-  }
-  h2 { font-family: var(--f-display); font-size: var(--t-2xl); color: #fff; margin-bottom: .8rem; }
-  p { line-height: 1.9; color: #9AA7C2; margin-bottom: 2rem; }
+  .wrap { max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .mark { width: 180px; height: auto; margin-block-end: 1rem; }
+  /* الروبوت يبحث عن الصفحة: العينان تتلفّتان يميناً ويساراً */
+  .mark .eye { transform-box: fill-box; transform-origin: center; animation: look 3.2s ease-in-out infinite; }
+  @keyframes look { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-6%); } 70% { transform: translateX(6%); } }
+  .code { font-family: var(--f-display); font-weight: 800; font-size: var(--t-sm); color: var(--c-accent-ink); direction: ltr; }
+  h1 { font-family: var(--f-display); font-weight: 800; font-size: var(--t-3xl); line-height: 1.25; }
+  p { line-height: 1.9; color: var(--c-text-soft); }
   .btn {
-    display: inline-flex; align-items: center; gap: .5rem;
-    padding: .9rem 2rem; border-radius: var(--r-full);
-    background: var(--c-primary); color: #fff;
-    font-weight: 700; font-size: var(--t-sm); text-decoration: none;
-    box-shadow: 0 8px 24px rgba(37,99,235,.4);
-    transition: transform .2s var(--e-out);
+    display: inline-flex; align-items: center; min-height: 52px; padding: .9rem 1.8rem; margin-block-start: .75rem;
+    border-radius: var(--r-full); background: var(--c-ink); color: var(--c-text-invert);
+    font-weight: 600; text-decoration: none;
   }
-  .btn:hover { transform: translateY(-2px); }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  .btn:hover { background: var(--c-ink-deep); }
+  .btn:focus-visible { outline: 3px solid var(--c-accent); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .mark .eye { animation: none; } }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="orb" aria-hidden="true">
-      <div class="ring r1"></div>
-      <div class="ring r2"></div>
-      <div class="core"></div>
-    </div>
-    <h1>404</h1>
-    <h2>هذه الصفحة خارج المدار</h2>
-    <p>يبدو أن الرابط الذي وصلت منه لم يعد موجوداً، أو أن العنوان به خطأ مطبعي.<br>
-       لا مشكلة — كل شيء ينتظرك في الصفحة الرئيسية.</p>
+  <main class="wrap">
+    <svg class="mark" viewBox="-564 -1619 2685 2440" aria-hidden="true"><path d="M955 -1192 L1654 -1192 A300 300 0 0 1 1954 -892 L1954 -892" fill="none" stroke="#1B2A41" stroke-width="174"/><path d="M1954 90 L1954 354 A300 300 0 0 1 1654 654 L-98 654 A300 300 0 0 1 -398 354 L-398 -892 A300 300 0 0 1 -98 -1192 L601 -1192" fill="none" stroke="#1B2A41" stroke-width="174"/><rect x="691" y="-1539" width="174" height="1539" fill="#1B2A41"/><g class="eye"><path d="M21 -290 A290 290 0 1 0 601 -290 A290 290 0 1 0 21 -290 Z M193 -290 A118 118 0 1 1 429 -290 A118 118 0 1 1 193 -290 Z" fill="#1B2A41" fill-rule="evenodd"/></g><circle cx="226" cy="-726" r="76" fill="#E2552B"/><circle cx="396" cy="-726" r="76" fill="#E2552B"/><g class="eye"><path d="M955 -290 A290 290 0 1 0 1535 -290 A290 290 0 1 0 955 -290 Z M1127 -290 A118 118 0 1 1 1363 -290 A118 118 0 1 1 1127 -290 Z" fill="#1B2A41" fill-rule="evenodd"/></g><path d="M1954 -560 L1954 -307 A220 220 0 0 1 1734 -87 L1361 -87" fill="none" stroke="#1B2A41" stroke-width="174"/><path d="M1448 -290 L1448 90 A220 220 0 0 1 1228 310 L409 310 A220 220 0 0 1 189 90 L189 88" fill="none" stroke="#1B2A41" stroke-width="174" stroke-linecap="butt" stroke-linejoin="round"/><circle cx="1954" cy="-726" r="76" fill="#E2552B"/></svg>
+    <p class="code">404</p>
+    <h1>هذه الصفحة غير موجودة</h1>
+    <p>يبدو أن الرابط الذي وصلت منه لم يعد موجوداً، أو أن في العنوان خطأً مطبعياً.</p>
     <a class="btn" href="/">العودة إلى الرئيسية</a>
-  </div>
+  </main>
 </body>
 </html>

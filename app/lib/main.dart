@@ -1,25 +1,19 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'app/router.dart';
 import 'brand/tokens.dart';
+import 'core/error_reporter.dart';
 import 'core/reload.dart';
 import 'core/supabase.dart';
-import 'features/attendance/attendance_screen.dart';
 import 'features/auth/auth_service.dart';
-import 'features/auth/login_screen.dart';
-import 'features/billing/student_dues_screen.dart';
-import 'features/billing/trainer_payroll_screen.dart';
-import 'features/cohorts/cohorts_screen.dart';
-import 'features/dashboard/home_screen.dart';
-import 'features/messages/messages_screen.dart';
-import 'features/programs/programs_screen.dart';
-import 'features/students/students_screen.dart';
-import 'features/trainers/trainers_screen.dart';
-import 'shared/app_shell.dart';
-import 'shared/nav_item.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +22,20 @@ Future<void> main() async {
   // المتصفح — بعض المتصفحات تبلّغ لغة فارغة أو غير قابلة للتحليل فيرمي
   // intl خطأ «Incorrect locale information provided» وتبقى الشاشة بيضاء.
   Intl.defaultLocale = 'ar';
+
+  // روابط نظيفة (/app/students) لا (/app/#/students) — تُشارَك على واتساب
+  // كما هي. vercel.json يعيد كل مسار تحت /app إلى index.html.
+  usePathUrlStrategy();
+  // context.push (ملف طالب من القائمة) يغيّر الرابط أيضاً — فيُشارَك ويعمل
+  // زر الرجوع في المتصفح، مع بقاء القائمة وبحثها خلفه.
+  GoRouter.optionURLReflectsImperativeAPIs = true;
+
+  // على الويب يعرض سفاري عدسته الخاصة فوق الحقل المخفي دائماً؛ عدسة Flutter
+  // فوقها = عدستان، وتعلق عدسة Flutter أحياناً بعد رفع الإصبع. نتركها للمتصفح.
+  if (kIsWeb) {
+    TextMagnifier.adaptiveMagnifierConfiguration =
+        TextMagnifierConfiguration.disabled;
+  }
 
   // لا يُنتظر التهيئة قبل runApp بلا حدّ: لو تعذّر الوصول إلى Supabase
   // (لا إنترنت، أو الخدمة متوقّفة) لبقي المستخدم أمام شاشة بيضاء بلا أي
@@ -40,6 +48,21 @@ Future<void> main() async {
         'استغرق الاتصال بالخادم وقتاً طويلاً. تحقّق من اتصالك بالإنترنت.';
   } catch (e) {
     bootError = 'تعذّر الاتصال بخادم الأكاديمية. حاول مجدداً بعد قليل.';
+  }
+
+  // أخطاء اللوحة الحيّة تصل إلى client_errors بدل أن تضيع في console
+  // جوّال لا يفتحه أحد. التسجيل يحتاج جلسة، فلا يعمل قبل الدخول.
+  if (bootError == null) {
+    ErrorReporter.instance = ErrorReporter.supabase(Db.client);
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      (previous ?? FlutterError.presentError)(details);
+      ErrorReporter.reportIfEnabled(details.exception, details.stack);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      ErrorReporter.reportIfEnabled(error, stack);
+      return false; // يبقى السلوك الافتراضي (طباعة في console) كما هو
+    };
   }
 
   runApp(NawahApp(bootError: bootError));
@@ -57,44 +80,59 @@ class NawahApp extends StatefulWidget {
 
 class _NawahAppState extends State<NawahApp> {
   AuthService? _auth;
+  GoRouter? _router;
+  final _counts = ValueNotifier<Map<String, int>>(const {});
 
   @override
   void initState() {
     super.initState();
     // AuthService يفترض أن Supabase مُهيّأ؛ لا نبنيه إن فشل الإقلاع.
+    // الموجّه يُبنى مرة واحدة ويستمع للجلسة بنفسه (refreshListenable).
     if (widget.bootError == null) {
-      _auth = AuthService()..addListener(_onAuthChanged);
+      _auth = AuthService();
+      _router = buildPortalRouter(_auth!, _counts);
     }
   }
 
-  void _onAuthChanged() => setState(() {});
-
   @override
   void dispose() {
-    _auth?.removeListener(_onAuthChanged);
+    _router?.dispose();
     _auth?.dispose();
+    _counts.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'نواة فليكس — لوحة الإدارة',
+    const locale = Locale('ar');
+    const locales = [Locale('ar'), Locale('en')];
+    const delegates = [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ];
+
+    if (_router == null) {
+      return MaterialApp(
+        title: 'أكاديمية نواة',
+        debugShowCheckedModeBanner: false,
+        theme: NawahTheme.light,
+        locale: locale,
+        supportedLocales: locales,
+        localizationsDelegates: delegates,
+        home: _BootError(message: widget.bootError!),
+      );
+    }
+
+    // التطبيق عربي بالكامل — RTL أصيل لا معكوس
+    return MaterialApp.router(
+      title: 'أكاديمية نواة',
       debugShowCheckedModeBanner: false,
       theme: NawahTheme.light,
-
-      // التطبيق عربي بالكامل — RTL أصيل لا معكوس
-      locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-
-      home: widget.bootError != null
-          ? _BootError(message: widget.bootError!)
-          : _Gate(auth: _auth!),
+      locale: locale,
+      supportedLocales: locales,
+      localizationsDelegates: delegates,
+      routerConfig: _router,
     );
   }
 }
@@ -116,7 +154,7 @@ class _BootError extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off, size: 46, color: Color(0xFF6B7A9C)),
+                const Icon(Icons.cloud_off, size: 46, color: NawahColors.invertSoft),
                 const SizedBox(height: NawahSpacing.s4),
                 const Text(
                   'تعذّر تشغيل اللوحة',
@@ -131,7 +169,7 @@ class _BootError extends StatelessWidget {
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF93A2C2), height: 1.8),
+                  style: const TextStyle(color: NawahColors.invertSoft, height: 1.8),
                 ),
                 const SizedBox(height: NawahSpacing.s5),
                 FilledButton.icon(
@@ -145,224 +183,6 @@ class _BootError extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// يقرّر ما يراه المستخدم: شاشة دخول، أو لوحة، أو رفض صلاحية.
-class _Gate extends StatelessWidget {
-  const _Gate({required this.auth});
-  final AuthService auth;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!auth.isSignedIn) return LoginScreen(auth: auth);
-
-    if (auth.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    // الصلاحية تُفحص هنا للواجهة، لكن الحماية الحقيقية في RLS —
-    // حتى لو تجاوز أحدهم هذه الشاشة، لن يعيد له الخادم صفاً واحداً.
-    // المدرّب يدخل أيضاً (لشاشة الحضور فقط) — وليس الإدارة/التحرير حصراً.
-    final p = auth.profile;
-    if (p == null || !(p.canManage || p.isTrainer)) {
-      return _NoAccess(auth: auth);
-    }
-
-    return DashboardShell(auth: auth);
-  }
-}
-
-class _NoAccess extends StatelessWidget {
-  const _NoAccess({required this.auth});
-  final AuthService auth;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(NawahSpacing.s6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.lock_outline,
-                size: 46,
-                color: NawahColors.textMuted,
-              ),
-              const SizedBox(height: NawahSpacing.s4),
-              const Text(
-                'لا تملك صلاحية الدخول للوحة',
-                style: TextStyle(
-                  fontFamily: NawahFonts.display,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 19,
-                  color: NawahColors.ink,
-                ),
-              ),
-              const SizedBox(height: NawahSpacing.s2),
-              Text(
-                'حسابك (${auth.profile?.roleLabel ?? 'غير معروف'}) لا يملك صلاحية '
-                'الإدارة. تواصل مع مدير الأكاديمية لترقية حسابك.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: NawahColors.textSoft,
-                  height: 1.8,
-                ),
-              ),
-              const SizedBox(height: NawahSpacing.s5),
-              OutlinedButton.icon(
-                onPressed: auth.signOut,
-                icon: const Icon(Icons.logout, size: 18),
-                label: const Text('تسجيل الخروج'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// اللوحة نفسها — تنقّل بين الأقسام داخل هيكل تكيّفي واحد.
-class DashboardShell extends StatefulWidget {
-  const DashboardShell({super.key, required this.auth});
-  final AuthService auth;
-
-  @override
-  State<DashboardShell> createState() => _DashboardShellState();
-}
-
-class _DashboardShellState extends State<DashboardShell> {
-  int _index = 0;
-  Map<String, int> _counts = const {};
-
-  void _onCounts(Map<String, int> c) {
-    if (mounted) setState(() => _counts = c);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.auth.profile;
-    // المدرّب يرى شاشة الحضور فقط — صلاحياته محصورة بحضور طلاب أفواجه،
-    // لا إدارة الطلاب/البرامج/الأفواج نفسها (قرار متَّخذ مسبقاً). الإدارة
-    // والمحرّر يرون اللوحة كاملة، وشاشة الحضور أيضاً لتتبّع/تصحيح يدوي.
-    final canManage = p?.canManage ?? false;
-    final canMarkAttendance = canManage || (p?.isTrainer ?? false);
-
-    // مصدر حقيقة واحد لكل قسم: (يظهر أم لا، عنصر التنقّل، الشاشة نفسها) —
-    // بدل قائمتين متوازيتين (items/screens) يجب تكرار نفس شرط الظهور
-    // على كلٍّ منهما يدوياً، وقد ينسى أحدهما فيختلّ التطابق بينهما.
-    final sections = <(bool visible, NavItem item, Widget screen)>[
-      (
-        canManage,
-        const NavItem(
-          label: 'نظرة عامة',
-          icon: Icons.dashboard_outlined,
-          selectedIcon: Icons.dashboard,
-        ),
-        HomeScreen(
-          profile: widget.auth.profile,
-          counts: _counts,
-          onGoToMessages: () => setState(() => _index = 1),
-          onGoToDues: () => setState(() => _index = 6),
-        ),
-      ),
-      (
-        canManage,
-        NavItem(
-          label: 'الرسائل',
-          icon: Icons.inbox_outlined,
-          selectedIcon: Icons.inbox,
-        ).withBadge(_counts['new'] ?? 0),
-        MessagesScreen(onCountsChanged: _onCounts),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'الطلاب',
-          icon: Icons.groups_outlined,
-          selectedIcon: Icons.groups,
-        ),
-        const StudentsScreen(),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'البرامج',
-          icon: Icons.school_outlined,
-          selectedIcon: Icons.school,
-        ),
-        const ProgramsScreen(),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'المدرّبون',
-          icon: Icons.badge_outlined,
-          selectedIcon: Icons.badge,
-        ),
-        const TrainersScreen(),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'الأفواج',
-          icon: Icons.groups_2_outlined,
-          selectedIcon: Icons.groups_2,
-        ),
-        const CohortsScreen(),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'المستحقات',
-          icon: Icons.receipt_long_outlined,
-          selectedIcon: Icons.receipt_long,
-        ),
-        const StudentDuesScreen(),
-      ),
-      (
-        canManage,
-        const NavItem(
-          label: 'مستحقات المدرّبين',
-          icon: Icons.payments_outlined,
-          selectedIcon: Icons.payments,
-        ),
-        const TrainerPayrollScreen(),
-      ),
-      (
-        canMarkAttendance,
-        const NavItem(
-          label: 'اللقاءات',
-          icon: Icons.checklist_outlined,
-          selectedIcon: Icons.checklist,
-        ),
-        AttendanceScreen(isAdmin: canManage),
-      ),
-    ].where((s) => s.$1).toList();
-
-    final items = sections.map((s) => s.$2).toList();
-    final screens = sections.map((s) => s.$3).toList();
-
-    // فهرس آمن دائماً: صلاحية المستخدم (وبالتالي طول القوائم أعلاه) قد
-    // تتغيّر بين بناء وآخر بلا إعادة تشغيل التطبيق.
-    final index = _index < items.length ? _index : 0;
-
-    return AppShell(
-      items: items,
-      index: index,
-      onSelect: (i) => setState(() => _index = i),
-      account: AccountInfo(
-        displayName: p?.displayName ?? '—',
-        roleLabel: p?.roleLabel ?? '',
-        initial: p?.initial ?? '؟',
-        onSignOut: widget.auth.signOut,
-      ),
-      title: items[index].label,
-      child: screens[index],
     );
   }
 }
